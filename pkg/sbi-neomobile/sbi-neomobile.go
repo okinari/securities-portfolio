@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/okinari/golibs"
 	"github.com/okinari/securities-portfolio/pkg/util"
+	"strconv"
+	"strings"
 )
 
 const LoginUrl = "https://trade.sbineomobile.co.jp/login"
@@ -56,17 +58,14 @@ func (sn *SbiNeomobile) Login(userName string, password string) error {
 }
 
 func (sn *SbiNeomobile) ApplyIpo() error {
-
-	//IpoUrl
-
 	return nil
 }
 
-func (sn *SbiNeomobile) GetSecuritiesAccountInfo() error {
+func (sn *SbiNeomobile) GetSecuritiesAccountInfo() ([]util.StockInfo, error) {
 
 	err := sn.webScraping.NavigatePage(SecuritiesAccountUrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	util.WaitTime()
 
@@ -100,14 +99,27 @@ func (sn *SbiNeomobile) GetSecuritiesAccountInfo() error {
 		}
 	}
 
+	var stockInfoList []util.StockInfo
+
 	for i := 0; ; i++ {
+
+		stock := util.StockInfo{
+			SecuritiesCompany: util.SbiNeomobile,
+		}
+
 		// 証券コード
-		securitiesCode, err := multiSel.At(i).FindByClass("ticker").Text()
+		secCode, err := multiSel.At(i).FindByClass("ticker").Text()
 		if err != nil {
 			//fmt.Printf("error: 証券コード: %v \n", err)
 			break
 		}
-		fmt.Printf("result 証券番号: %v \n", securitiesCode)
+		securitiesCode, err := strconv.Atoi(secCode)
+		if err != nil {
+			fmt.Printf("error: 数値変換に失敗: %v \n", err)
+			break
+		}
+		stock.SecuritiesCode = securitiesCode
+		//fmt.Printf("result 証券番号: %v \n", securitiesCode)
 
 		ms := multiSel.At(i).All("table tbody tr")
 
@@ -130,12 +142,27 @@ func (sn *SbiNeomobile) GetSecuritiesAccountInfo() error {
 			//fmt.Printf("result 項目値: %v \n", value)
 
 			if name == "保有数量" {
-				fmt.Printf("result 保有数量: %v \n", value)
+				numberOfOwnedStock, err := strconv.Atoi(value)
+				if err != nil {
+					fmt.Printf("error: 数値変換に失敗: %v \n", err)
+					break
+				}
+				stock.NumberOfOwnedStock = numberOfOwnedStock
+				//fmt.Printf("result 保有数量: %v \n", value)
 			} else if name == "平均取得単価" {
-				fmt.Printf("result 平均取得単価: %v \n", value)
+				value = strings.Replace(value, ",", "", -1)
+				averagePurchasePrice, err := strconv.Atoi(value)
+				if err != nil {
+					fmt.Printf("error: 数値変換に失敗: %v \n", err)
+					break
+				}
+				stock.AveragePurchasePrice = averagePurchasePrice
+				//fmt.Printf("result 平均取得単価: %v \n", value)
 			}
 		}
+
+		stockInfoList = append(stockInfoList, stock)
 	}
 
-	return nil
+	return stockInfoList, nil
 }
