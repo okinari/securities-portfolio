@@ -322,7 +322,7 @@ func (sj *ShisanJuni) UpdateSec(stockInfo util.StockInfo) error {
 		//fmt.Printf("result 証券会社: %v \n", securitiesCompany)
 
 		// 該当の株式ではない場合、次へ
-		securitiesCompany := util.GetSecuritiesCompanyCode(secCompany)
+		securitiesCompany := util.GetSecuritiesCompany(secCompany)
 		if stockInfo.SecuritiesCode != securitiesCode || stockInfo.SecuritiesCompany != securitiesCompany {
 			continue
 		}

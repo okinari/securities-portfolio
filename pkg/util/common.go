@@ -1,23 +1,34 @@
 package util
 
-import "time"
+import (
+	"time"
+)
 
-type SecuritiesCompanyCode int
+type SecuritiesCompany int
 
 const (
-	None SecuritiesCompanyCode = iota
+	NoneSecuritiesCompany SecuritiesCompany = iota
 	SbiSecurities
 	SbiNeomobile
 )
 
+type SecuritiesAccount int
+
+const (
+	NoneAccount SecuritiesAccount = iota
+	NisaAccount
+	SpecificAccount
+)
+
 type StockInfo struct {
-	SecuritiesCompany    SecuritiesCompanyCode
+	SecuritiesCompany    SecuritiesCompany
+	SecuritiesAccount    SecuritiesAccount
 	SecuritiesCode       int
 	AveragePurchasePrice int
 	NumberOfOwnedStock   int
 }
 
-func GetSecuritiesCompanyCode(str string) SecuritiesCompanyCode {
+func GetSecuritiesCompany(str string) SecuritiesCompany {
 	if str == "SBI証券" {
 		return SbiSecurities
 	}
@@ -25,9 +36,19 @@ func GetSecuritiesCompanyCode(str string) SecuritiesCompanyCode {
 		return SbiNeomobile
 	}
 
-	return None
+	return NoneSecuritiesCompany
 }
 
 func WaitTime() {
 	time.Sleep(3 * time.Second)
+}
+
+func ToIntByRemoveString(str string) int {
+	n := 0
+	for _, r := range str {
+		if '0' <= r && r <= '9' {
+			n = n*10 + int(r-'0')
+		}
+	}
+	return n
 }
