@@ -61,13 +61,6 @@ func (sj *ShisanJuni) Login(userName string, password string) error {
 	return nil
 }
 
-func (sj *ShisanJuni) ApplyIpo() error {
-
-	//IpoUrl
-
-	return nil
-}
-
 func (sj *ShisanJuni) SetSecuritiesInfo() error {
 
 	err := sj.ws.NavigatePage(JapanSecuritiesUrl)
@@ -211,7 +204,7 @@ func (sj *ShisanJuni) addSec(stockInfo util.StockInfo) error {
 	if err != nil {
 		return err
 	}
-	err = sj.ws.SetStringByName("stockCode", strconv.Itoa(stockInfo.SecuritiesCode))
+	err = sj.ws.SetStringByName("stockCode", stockInfo.SecuritiesCode)
 	if err != nil {
 		return err
 	}
@@ -219,7 +212,7 @@ func (sj *ShisanJuni) addSec(stockInfo util.StockInfo) error {
 	if err != nil {
 		return err
 	}
-	err = sj.ws.SetStringByName("buyPrice", strconv.Itoa(stockInfo.AveragePurchasePrice))
+	err = sj.ws.SetStringByName("buyPrice", strconv.FormatFloat(stockInfo.AveragePurchasePrice, 'f', -1, 64))
 	if err != nil {
 		return err
 	}
@@ -307,11 +300,11 @@ func (sj *ShisanJuni) UpdateSec(stockInfo util.StockInfo) error {
 			break
 		}
 		//fmt.Printf("result 証券コード: %v \n", securitiesCode)
-		securitiesCode, err := strconv.Atoi(secCode)
-		if err != nil {
-			fmt.Printf("error: 証券コードの数字化に失敗: %v \n", err)
-			break
-		}
+		//securitiesCode, err := strconv.Atoi(secCode)
+		//if err != nil {
+		//	fmt.Printf("error: 証券コードの数字化に失敗: %v \n", err)
+		//	break
+		//}
 
 		// 証券会社
 		secCompany, err := ms.At(2).All("span > span").At(0).Text()
@@ -323,7 +316,7 @@ func (sj *ShisanJuni) UpdateSec(stockInfo util.StockInfo) error {
 
 		// 該当の株式ではない場合、次へ
 		securitiesCompany := util.GetSecuritiesCompany(secCompany)
-		if stockInfo.SecuritiesCode != securitiesCode || stockInfo.SecuritiesCompany != securitiesCompany {
+		if stockInfo.SecuritiesCode != secCode || stockInfo.SecuritiesCompany != securitiesCompany {
 			continue
 		}
 
@@ -357,13 +350,13 @@ func (sj *ShisanJuni) UpdateSec(stockInfo util.StockInfo) error {
 			fmt.Printf("error: 保有株式数の設定に失敗: %v \n", err)
 			break
 		}
-		err = sj.ws.ExecJavaScript("document.querySelector('[name=editAvgPrice]').value = '"+strconv.Itoa(stockInfo.AveragePurchasePrice)+"'", nil)
+		err = sj.ws.ExecJavaScript("document.querySelector('[name=editAvgPrice]').value = '"+strconv.FormatFloat(stockInfo.AveragePurchasePrice, 'f', -1, 64)+"'", nil)
 		if err != nil {
 			fmt.Printf("error: 約定単価のクリアに失敗: %v \n", err)
 			break
 		}
 		err = sj.ws.SetStringByName("editAvgPrice", "")
-		err = sj.ws.SetStringByName("editAvgPrice", strconv.Itoa(stockInfo.AveragePurchasePrice))
+		err = sj.ws.SetStringByName("editAvgPrice", strconv.FormatFloat(stockInfo.AveragePurchasePrice, 'f', -1, 64))
 		if err != nil {
 			fmt.Printf("error: 約定単価の設定に失敗: %v \n", err)
 			break

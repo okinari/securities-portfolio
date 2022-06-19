@@ -1,6 +1,8 @@
 package util
 
 import (
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -10,6 +12,15 @@ const (
 	NoneSecuritiesCompany SecuritiesCompany = iota
 	SbiSecurities
 	SbiNeomobile
+	RakutenSecurities
+)
+
+type Country int
+
+const (
+	NoneCountry Country = iota
+	Japan
+	America
 )
 
 type SecuritiesAccount int
@@ -22,9 +33,10 @@ const (
 
 type StockInfo struct {
 	SecuritiesCompany    SecuritiesCompany
+	StockCountry         Country
 	SecuritiesAccount    SecuritiesAccount
-	SecuritiesCode       int
-	AveragePurchasePrice int
+	SecuritiesCode       string
+	AveragePurchasePrice float64
 	NumberOfOwnedStock   int
 }
 
@@ -51,4 +63,19 @@ func ToIntByRemoveString(str string) int {
 		}
 	}
 	return n
+}
+
+func ToFloatByRemoveString(str string) (float64, error) {
+	strNumber := ""
+	slice := strings.Split(str, "")
+	for i, r := range str {
+		if ('0' <= r && r <= '9') || r == '.' {
+			strNumber += slice[i]
+		}
+	}
+	f, err := strconv.ParseFloat(strNumber, 0)
+	if err != nil {
+		return 0.0, err
+	}
+	return f, nil
 }
