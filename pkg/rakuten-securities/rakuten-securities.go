@@ -35,6 +35,7 @@ func (rs *RakutenSecurities) Login(userName string, password string) error {
 	if err != nil {
 		return err
 	}
+	util.WaitTime()
 
 	err = rs.ws.SetStringByID("form-login-id", userName)
 	if err != nil {
@@ -54,39 +55,39 @@ func (rs *RakutenSecurities) Login(userName string, password string) error {
 	return nil
 }
 
-func (rs *RakutenSecurities) GetSecuritiesAccountInfo() ([]util.StockInfo, error) {
+func (rs *RakutenSecurities) GetSecuritiesAccountInfo() ([]util.Stock, error) {
 
-	var stockInfoList []util.StockInfo
+	var stocks []util.Stock
 
 	// 国内株式（現物/特定預り）
-	siList, err := rs.GetStockListJapanForJapanSpecificAccount()
+	tmpStocks, err := rs.GetStocksJapanForJapanSpecificAccount()
 	if err != nil {
 		return nil, err
 	}
-	stockInfoList = append(stockInfoList, siList...)
+	stocks = append(stocks, tmpStocks...)
 
 	// 国内株式（現物/NISA預り）
-	siList, err = rs.GetStockListForJapanNisaAccount()
+	tmpStocks, err = rs.GetStocksForJapanNisaAccount()
 	if err != nil {
 		return nil, err
 	}
-	stockInfoList = append(stockInfoList, siList...)
+	stocks = append(stocks, tmpStocks...)
 
 	// 米国株式（現物/特定預り）
-	siList, err = rs.GetStockListForUsSpecificAccount()
+	tmpStocks, err = rs.GetStocksForUsSpecificAccount()
 	if err != nil {
 		return nil, err
 	}
-	stockInfoList = append(stockInfoList, siList...)
+	stocks = append(stocks, tmpStocks...)
 
 	// 米国株式（現物/NISA預り）
-	siList, err = rs.GetStockListForUsNisaAccount()
+	tmpStocks, err = rs.GetStocksForUsNisaAccount()
 	if err != nil {
 		return nil, err
 	}
-	stockInfoList = append(stockInfoList, siList...)
+	stocks = append(stocks, tmpStocks...)
 
-	return stockInfoList, nil
+	return stocks, nil
 }
 
 func (rs *RakutenSecurities) openJapanStockScreen() error {
@@ -102,7 +103,7 @@ func (rs *RakutenSecurities) openJapanStockScreen() error {
 	return nil
 }
 
-func (rs *RakutenSecurities) GetStockListJapanForJapanSpecificAccount() ([]util.StockInfo, error) {
+func (rs *RakutenSecurities) GetStocksJapanForJapanSpecificAccount() ([]util.Stock, error) {
 
 	err := rs.openJapanStockScreen()
 	if err != nil {
@@ -112,12 +113,12 @@ func (rs *RakutenSecurities) GetStockListJapanForJapanSpecificAccount() ([]util.
 	multiSelection := rs.ws.GetPage().All("table#poss-tbl-sp > tbody > tr[align=right]")
 
 	count, _ := multiSelection.Count()
-	stockInfoList := make([]util.StockInfo, count)
+	stocks := make([]util.Stock, count)
 
 	arrayCount := 0
 	for i := 0; ; i++ {
 
-		stockInfo := &util.StockInfo{
+		stock := &util.Stock{
 			SecuritiesCompany: util.RakutenSecurities,
 			StockCountry:      util.Japan,
 			SecuritiesAccount: util.SpecificAccount,
@@ -130,33 +131,33 @@ func (rs *RakutenSecurities) GetStockListJapanForJapanSpecificAccount() ([]util.
 		if err != nil {
 			break
 		}
-		stockInfo.SecuritiesCode = strconv.Itoa(util.ToIntByRemoveString(secCode))
+		stock.SecuritiesCode = strconv.Itoa(util.ToIntByRemoveString(secCode))
 
 		// 保有件数
 		numOfStock, err := ms.At(2).Find("a").Text()
 		if err != nil {
 			break
 		}
-		stockInfo.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
 
 		// 取得単価
 		priceOfAvg, err := ms.At(5).Text()
 		if err != nil {
 			break
 		}
-		stockInfo.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
 		if err != nil {
 			break
 		}
 
-		stockInfoList[arrayCount] = *stockInfo
+		stocks[arrayCount] = *stock
 		arrayCount++
 	}
 
-	return stockInfoList, nil
+	return stocks, nil
 }
 
-func (rs *RakutenSecurities) GetStockListForJapanNisaAccount() ([]util.StockInfo, error) {
+func (rs *RakutenSecurities) GetStocksForJapanNisaAccount() ([]util.Stock, error) {
 
 	err := rs.openJapanStockScreen()
 	if err != nil {
@@ -166,12 +167,12 @@ func (rs *RakutenSecurities) GetStockListForJapanNisaAccount() ([]util.StockInfo
 	multiSelection := rs.ws.GetPage().All("table#poss-tbl-nisa > tbody > tr[align=right]")
 
 	count, _ := multiSelection.Count()
-	stockInfoList := make([]util.StockInfo, count)
+	stocks := make([]util.Stock, count)
 
 	arrayCount := 0
 	for i := 0; ; i++ {
 
-		stockInfo := &util.StockInfo{
+		stock := &util.Stock{
 			SecuritiesCompany: util.RakutenSecurities,
 			StockCountry:      util.Japan,
 			SecuritiesAccount: util.NisaAccount,
@@ -184,30 +185,30 @@ func (rs *RakutenSecurities) GetStockListForJapanNisaAccount() ([]util.StockInfo
 		if err != nil {
 			break
 		}
-		stockInfo.SecuritiesCode = strconv.Itoa(util.ToIntByRemoveString(secCode))
+		stock.SecuritiesCode = strconv.Itoa(util.ToIntByRemoveString(secCode))
 
 		// 保有件数
 		numOfStock, err := ms.At(1).Text()
 		if err != nil {
 			break
 		}
-		stockInfo.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
 
 		// 取得単価
 		priceOfAvg, err := ms.At(2).Text()
 		if err != nil {
 			break
 		}
-		stockInfo.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
 		if err != nil {
 			break
 		}
 
-		stockInfoList[arrayCount] = *stockInfo
+		stocks[arrayCount] = *stock
 		arrayCount++
 	}
 
-	return stockInfoList, nil
+	return stocks, nil
 }
 
 func (rs *RakutenSecurities) openUsStockScreen() error {
@@ -223,7 +224,7 @@ func (rs *RakutenSecurities) openUsStockScreen() error {
 	return nil
 }
 
-func (rs *RakutenSecurities) GetStockListForUsSpecificAccount() ([]util.StockInfo, error) {
+func (rs *RakutenSecurities) GetStocksForUsSpecificAccount() ([]util.Stock, error) {
 
 	err := rs.openUsStockScreen()
 	if err != nil {
@@ -234,12 +235,12 @@ func (rs *RakutenSecurities) GetStockListForUsSpecificAccount() ([]util.StockInf
 
 	count, _ := multiSelection.Count()
 	count = (count - 1) / 4
-	stockInfoList := make([]util.StockInfo, count)
+	stocks := make([]util.Stock, count)
 
 	arrayCount := 0
 	for i := 1; ; i = i + 4 {
 
-		stockInfo := &util.StockInfo{
+		stock := &util.Stock{
 			SecuritiesCompany: util.RakutenSecurities,
 			StockCountry:      util.Usa,
 			SecuritiesAccount: util.SpecificAccount,
@@ -252,33 +253,33 @@ func (rs *RakutenSecurities) GetStockListForUsSpecificAccount() ([]util.StockInf
 		if err != nil {
 			break
 		}
-		stockInfo.SecuritiesCode = secCode
+		stock.SecuritiesCode = secCode
 
 		// 保有件数
 		numOfStock, err := ms.At(1).Text()
 		if err != nil {
 			break
 		}
-		stockInfo.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
 
 		// 取得単価
 		priceOfAvg, err := ms.At(2).Text()
 		if err != nil {
 			break
 		}
-		stockInfo.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
 		if err != nil {
 			break
 		}
 
-		stockInfoList[arrayCount] = *stockInfo
+		stocks[arrayCount] = *stock
 		arrayCount++
 	}
 
-	return stockInfoList, nil
+	return stocks, nil
 }
 
-func (rs *RakutenSecurities) GetStockListForUsNisaAccount() ([]util.StockInfo, error) {
+func (rs *RakutenSecurities) GetStocksForUsNisaAccount() ([]util.Stock, error) {
 
 	err := rs.openUsStockScreen()
 	if err != nil {
@@ -289,12 +290,12 @@ func (rs *RakutenSecurities) GetStockListForUsNisaAccount() ([]util.StockInfo, e
 
 	count, _ := multiSelection.Count()
 	count = (count - 1) / 4
-	stockInfoList := make([]util.StockInfo, count)
+	stocks := make([]util.Stock, count)
 
 	arrayCount := 0
 	for i := 1; ; i = i + 4 {
 
-		stockInfo := &util.StockInfo{
+		stock := &util.Stock{
 			SecuritiesCompany: util.RakutenSecurities,
 			StockCountry:      util.Usa,
 			SecuritiesAccount: util.NisaAccount,
@@ -307,7 +308,7 @@ func (rs *RakutenSecurities) GetStockListForUsNisaAccount() ([]util.StockInfo, e
 		if err != nil {
 			break
 		}
-		stockInfo.SecuritiesCode = secCode
+		stock.SecuritiesCode = secCode
 
 		ms := sel.All("td > div > nobr")
 
@@ -316,21 +317,21 @@ func (rs *RakutenSecurities) GetStockListForUsNisaAccount() ([]util.StockInfo, e
 		if err != nil {
 			break
 		}
-		stockInfo.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
 
 		// 取得単価
 		priceOfAvg, err := ms.At(1).Text()
 		if err != nil {
 			break
 		}
-		stockInfo.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
 		if err != nil {
 			break
 		}
 
-		stockInfoList[arrayCount] = *stockInfo
+		stocks[arrayCount] = *stock
 		arrayCount++
 	}
 
-	return stockInfoList, nil
+	return stocks, nil
 }

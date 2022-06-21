@@ -35,6 +35,7 @@ func (sn *SbiNeomobile) Login(userName string, password string) error {
 	if err != nil {
 		return err
 	}
+	util.WaitTime()
 
 	err = sn.ws.SetStringByName("username", userName)
 	if err != nil {
@@ -48,11 +49,12 @@ func (sn *SbiNeomobile) Login(userName string, password string) error {
 	if err != nil {
 		return err
 	}
+	util.WaitTime()
 
 	return nil
 }
 
-func (sn *SbiNeomobile) GetSecuritiesAccountInfo() ([]util.StockInfo, error) {
+func (sn *SbiNeomobile) GetSecuritiesAccountInfo() ([]util.Stock, error) {
 
 	err := sn.ws.NavigatePage("https://trade.sbineomobile.co.jp/account/portfolio")
 	if err != nil {
@@ -79,11 +81,11 @@ func (sn *SbiNeomobile) GetSecuritiesAccountInfo() ([]util.StockInfo, error) {
 		}
 	}
 
-	var stockInfoList []util.StockInfo
+	var stocks []util.Stock
 
 	for i := 0; ; i++ {
 
-		stock := util.StockInfo{
+		stock := util.Stock{
 			SecuritiesCompany: util.SbiNeomobile,
 			StockCountry:      util.Japan,
 			SecuritiesAccount: util.SpecificAccount,
@@ -125,8 +127,8 @@ func (sn *SbiNeomobile) GetSecuritiesAccountInfo() ([]util.StockInfo, error) {
 			}
 		}
 
-		stockInfoList = append(stockInfoList, stock)
+		stocks = append(stocks, stock)
 	}
 
-	return stockInfoList, nil
+	return stocks, nil
 }

@@ -37,6 +37,7 @@ func (ss *SbiSecurities) Login(userName string, password string) error {
 	if err != nil {
 		return err
 	}
+	util.WaitTime()
 
 	err = ss.ws.SetStringByName("user_id", userName)
 	if err != nil {
@@ -50,15 +51,14 @@ func (ss *SbiSecurities) Login(userName string, password string) error {
 	if err != nil {
 		return err
 	}
-
 	util.WaitTime()
 
 	return nil
 }
 
-func (ss *SbiSecurities) GetSecuritiesAccountInfo() ([]util.StockInfo, error) {
+func (ss *SbiSecurities) GetSecuritiesAccountInfo() ([]util.Stock, error) {
 
-	var stocks []util.StockInfo
+	var stocks []util.Stock
 
 	// 国内株式（現物/特定預り）
 	sl, err := ss.GetStocksForJapanSpecificAccount()
@@ -90,13 +90,12 @@ func (ss *SbiSecurities) openJapanAccountScreen() error {
 	if err != nil {
 		return err
 	}
-
 	util.WaitTime()
 
 	return nil
 }
 
-func (ss *SbiSecurities) GetStocksForJapanSpecificAccount() ([]util.StockInfo, error) {
+func (ss *SbiSecurities) GetStocksForJapanSpecificAccount() ([]util.Stock, error) {
 
 	err := ss.openJapanAccountScreen()
 	if err != nil {
@@ -116,7 +115,7 @@ func (ss *SbiSecurities) GetStocksForJapanSpecificAccount() ([]util.StockInfo, e
 	return stocks, nil
 }
 
-func (ss *SbiSecurities) GetStocksForJapanNisaAccount() ([]util.StockInfo, error) {
+func (ss *SbiSecurities) GetStocksForJapanNisaAccount() ([]util.Stock, error) {
 
 	err := ss.openJapanAccountScreen()
 	if err != nil {
@@ -136,17 +135,17 @@ func (ss *SbiSecurities) GetStocksForJapanNisaAccount() ([]util.StockInfo, error
 	return stocks, nil
 }
 
-func getStocksForJapan(multiSelection *agouti.MultiSelection, securitiesAccount util.SecuritiesAccount) []util.StockInfo {
+func getStocksForJapan(multiSelection *agouti.MultiSelection, securitiesAccount util.SecuritiesAccount) []util.Stock {
 
 	count, _ := multiSelection.Count()
 	count = (count - 2) / 2
 
-	stockInfoList := make([]util.StockInfo, count)
+	stocks := make([]util.Stock, count)
 
 	arrayCount := 0
 	for i := 2; ; i++ {
 
-		stockInfo := &util.StockInfo{
+		stock := &util.Stock{
 			SecuritiesCompany: util.SbiSecurities,
 			StockCountry:      util.Japan,
 			SecuritiesAccount: securitiesAccount,
@@ -160,7 +159,7 @@ func getStocksForJapan(multiSelection *agouti.MultiSelection, securitiesAccount 
 		if err != nil {
 			break
 		}
-		stockInfo.SecuritiesCode = strconv.Itoa(util.ToIntByRemoveString(secCode))
+		stock.SecuritiesCode = strconv.Itoa(util.ToIntByRemoveString(secCode))
 
 		// 偶数列は保有株式数、取得単価など
 		i++
@@ -171,23 +170,23 @@ func getStocksForJapan(multiSelection *agouti.MultiSelection, securitiesAccount 
 		if err != nil {
 			break
 		}
-		stockInfo.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
 
 		// 取得単価
 		priceOfAvg, err := ms.At(1).Text()
 		if err != nil {
 			break
 		}
-		stockInfo.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
 		if err != nil {
 			break
 		}
 
-		stockInfoList[arrayCount] = *stockInfo
+		stocks[arrayCount] = *stock
 		arrayCount++
 	}
 
-	return stockInfoList
+	return stocks
 }
 
 func (ss *SbiSecurities) openUsaAccountScreen() error {
@@ -196,20 +195,18 @@ func (ss *SbiSecurities) openUsaAccountScreen() error {
 	if err != nil {
 		return err
 	}
-
 	util.WaitTime()
 
 	err = ss.ws.NavigatePage("https://global.sbisec.co.jp/account/summary")
 	if err != nil {
 		return err
 	}
-
 	util.WaitTime()
 
 	return nil
 }
 
-func (ss *SbiSecurities) GetStocksForUsaAccount() ([]util.StockInfo, error) {
+func (ss *SbiSecurities) GetStocksForUsaAccount() ([]util.Stock, error) {
 
 	err := ss.openUsaAccountScreen()
 	if err != nil {
@@ -218,7 +215,7 @@ func (ss *SbiSecurities) GetStocksForUsaAccount() ([]util.StockInfo, error) {
 
 	multiSelection := ss.ws.GetPage().All("div[class^=item-right] ul[class^=grid-table] > li")
 
-	var stocks []util.StockInfo
+	var stocks []util.Stock
 
 	securitiesAccount := util.NoneAccount
 	for i := 0; ; i++ {
@@ -241,14 +238,14 @@ func (ss *SbiSecurities) GetStocksForUsaAccount() ([]util.StockInfo, error) {
 
 		for j := 0; ; j++ {
 
-			stockInfo := util.StockInfo{
+			stock := util.Stock{
 				SecuritiesCompany: util.SbiSecurities,
 				StockCountry:      util.Usa,
 				SecuritiesAccount: securitiesAccount,
 			}
 
 			// 証券コード
-			stockInfo.SecuritiesCode, err = sel.All("div > div[data-security-code]").At(j).Attribute("data-security-code")
+			stock.SecuritiesCode, err = sel.All("div > div[data-security-code]").At(j).Attribute("data-security-code")
 			if err != nil {
 				break
 			}
@@ -260,19 +257,19 @@ func (ss *SbiSecurities) GetStocksForUsaAccount() ([]util.StockInfo, error) {
 			if err != nil {
 				break
 			}
-			stockInfo.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+			stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
 
 			// 取得単価
 			priceOfAvg, err := ms.At(j*4 + 1).Text()
 			if err != nil {
 				break
 			}
-			stockInfo.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+			stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
 			if err != nil {
 				break
 			}
 
-			stocks = append(stocks, stockInfo)
+			stocks = append(stocks, stock)
 		}
 	}
 

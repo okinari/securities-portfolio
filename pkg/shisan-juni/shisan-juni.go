@@ -36,7 +36,6 @@ func (sj *ShisanJuni) Login(userName string, password string) error {
 	if err != nil {
 		return err
 	}
-
 	util.WaitTime()
 
 	err = sj.ws.SetStringByName("email", userName)
@@ -51,29 +50,28 @@ func (sj *ShisanJuni) Login(userName string, password string) error {
 	if err != nil {
 		return err
 	}
-
 	util.WaitTime()
 
 	return nil
 }
 
-func (sj *ShisanJuni) GetSecuritiesAccountInfo() ([]util.StockInfo, error) {
+func (sj *ShisanJuni) GetSecuritiesAccountInfo() ([]util.Stock, error) {
 
-	var stockInfoList []util.StockInfo
+	var stocks []util.Stock
 
-	sl, err := sj.GetStockList(util.Japan)
+	sl, err := sj.GetStocks(util.Japan)
 	if err != nil {
 		return nil, err
 	}
-	stockInfoList = append(stockInfoList, sl...)
+	stocks = append(stocks, sl...)
 
-	sl, err = sj.GetStockList(util.Usa)
+	sl, err = sj.GetStocks(util.Usa)
 	if err != nil {
 		return nil, err
 	}
-	stockInfoList = append(stockInfoList, sl...)
+	stocks = append(stocks, sl...)
 
-	return stockInfoList, nil
+	return stocks, nil
 }
 
 func (sj *ShisanJuni) openStockInfoScreen(country util.Country) error {
@@ -87,13 +85,12 @@ func (sj *ShisanJuni) openStockInfoScreen(country util.Country) error {
 	if err != nil {
 		return err
 	}
-
 	util.WaitTime()
 
 	return nil
 }
 
-func (sj *ShisanJuni) GetStockList(country util.Country) ([]util.StockInfo, error) {
+func (sj *ShisanJuni) GetStocks(country util.Country) ([]util.Stock, error) {
 
 	stockCountry := country
 	err := sj.openStockInfoScreen(country)
@@ -103,7 +100,7 @@ func (sj *ShisanJuni) GetStockList(country util.Country) ([]util.StockInfo, erro
 
 	multiSel := sj.ws.GetPage().Find("table").All("tbody > tr")
 
-	var stockInfoList []util.StockInfo
+	var stocks []util.Stock
 
 	for i := 0; ; i++ {
 
@@ -137,12 +134,12 @@ func (sj *ShisanJuni) GetStockList(country util.Country) ([]util.StockInfo, erro
 			continue
 		}
 
-		stockInfo := util.StockInfo{
+		stock := util.Stock{
 			StockCountry: stockCountry,
 		}
 
 		// 証券コード
-		stockInfo.SecuritiesCode, err = ms.At(1).All("div").At(0).Find("span").Text()
+		stock.SecuritiesCode, err = ms.At(1).All("div").At(0).Find("span").Text()
 		if err != nil {
 			break
 		}
@@ -152,34 +149,34 @@ func (sj *ShisanJuni) GetStockList(country util.Country) ([]util.StockInfo, erro
 		if err != nil {
 			break
 		}
-		stockInfo.SecuritiesCompany = util.GetSecuritiesCompany(tag)
-		stockInfo.SecuritiesAccount = util.GetSecuritiesAccount(tag)
+		stock.SecuritiesCompany = util.GetSecuritiesCompany(tag)
+		stock.SecuritiesAccount = util.GetSecuritiesAccount(tag)
 
 		// 保有株式数
 		numOfOwnedStock, err := ms.At(4).Text()
 		if err != nil {
 			break
 		}
-		stockInfo.NumberOfOwnedStock = util.ToIntByRemoveString(numOfOwnedStock)
+		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfOwnedStock)
 
 		// 平均購入単価
 		unitPriceOfAvgPurchase, err := ms.At(5).Text()
 		if err != nil {
 			break
 		}
-		stockInfo.AveragePurchasePrice, err = util.ToFloatByRemoveString(unitPriceOfAvgPurchase)
+		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(unitPriceOfAvgPurchase)
 		if err != nil {
 			break
 		}
 
-		stockInfoList = append(stockInfoList, stockInfo)
+		stocks = append(stocks, stock)
 	}
 
-	return stockInfoList, nil
+	return stocks, nil
 }
 
 // addSec は使用不可
-func (sj *ShisanJuni) addSec(country util.Country, stockInfo util.StockInfo) error {
+func (sj *ShisanJuni) addSec(country util.Country, stock util.Stock) error {
 
 	err := sj.openStockInfoScreen(country)
 	if err != nil {
@@ -206,20 +203,20 @@ func (sj *ShisanJuni) addSec(country util.Country, stockInfo util.StockInfo) err
 		return err
 	}
 
-	//sj.ws.SetStringByName("sCompany", stockInfo.SecuritiesCompany)
+	//sj.ws.SetStringByName("sCompany", stock.SecuritiesCompany)
 	err = sj.ws.SetStringByName("sCompany", "SBI証券")
 	if err != nil {
 		return err
 	}
-	err = sj.ws.SetStringByName("stockCode", stockInfo.SecuritiesCode)
+	err = sj.ws.SetStringByName("stockCode", stock.SecuritiesCode)
 	if err != nil {
 		return err
 	}
-	err = sj.ws.SetStringByName("addNumber", strconv.Itoa(stockInfo.NumberOfOwnedStock))
+	err = sj.ws.SetStringByName("addNumber", strconv.Itoa(stock.NumberOfOwnedStock))
 	if err != nil {
 		return err
 	}
-	err = sj.ws.SetStringByName("buyPrice", strconv.FormatFloat(stockInfo.AveragePurchasePrice, 'f', -1, 64))
+	err = sj.ws.SetStringByName("buyPrice", strconv.FormatFloat(stock.AveragePurchasePrice, 'f', -1, 64))
 	if err != nil {
 		return err
 	}
@@ -228,7 +225,7 @@ func (sj *ShisanJuni) addSec(country util.Country, stockInfo util.StockInfo) err
 }
 
 // UpdateSec は使用不可
-func (sj *ShisanJuni) UpdateSec(country util.Country, stockInfo util.StockInfo) error {
+func (sj *ShisanJuni) UpdateSec(country util.Country, stock util.Stock) error {
 
 	err := sj.openStockInfoScreen(country)
 	if err != nil {
@@ -323,7 +320,7 @@ func (sj *ShisanJuni) UpdateSec(country util.Country, stockInfo util.StockInfo) 
 
 		// 該当の株式ではない場合、次へ
 		securitiesCompany := util.GetSecuritiesCompany(secCompany)
-		if stockInfo.SecuritiesCode != secCode || stockInfo.SecuritiesCompany != securitiesCompany {
+		if stock.SecuritiesCode != secCode || stock.SecuritiesCompany != securitiesCompany {
 			continue
 		}
 
@@ -346,24 +343,24 @@ func (sj *ShisanJuni) UpdateSec(country util.Country, stockInfo util.StockInfo) 
 		util.WaitTime()
 
 		// 保有株式数、約定単価を設定して、情報更新
-		err = sj.ws.ExecJavaScript("document.querySelector('[name=editPosAmount]').value = '"+strconv.Itoa(stockInfo.NumberOfOwnedStock)+"'", nil)
+		err = sj.ws.ExecJavaScript("document.querySelector('[name=editPosAmount]').value = '"+strconv.Itoa(stock.NumberOfOwnedStock)+"'", nil)
 		if err != nil {
 			fmt.Printf("error: 保有株式数のクリアに失敗: %v \n", err)
 			break
 		}
 		err = sj.ws.SetStringByName("editPosAmount", "")
-		err = sj.ws.SetStringByName("editPosAmount", strconv.Itoa(stockInfo.NumberOfOwnedStock))
+		err = sj.ws.SetStringByName("editPosAmount", strconv.Itoa(stock.NumberOfOwnedStock))
 		if err != nil {
 			fmt.Printf("error: 保有株式数の設定に失敗: %v \n", err)
 			break
 		}
-		err = sj.ws.ExecJavaScript("document.querySelector('[name=editAvgPrice]').value = '"+strconv.FormatFloat(stockInfo.AveragePurchasePrice, 'f', -1, 64)+"'", nil)
+		err = sj.ws.ExecJavaScript("document.querySelector('[name=editAvgPrice]').value = '"+strconv.FormatFloat(stock.AveragePurchasePrice, 'f', -1, 64)+"'", nil)
 		if err != nil {
 			fmt.Printf("error: 約定単価のクリアに失敗: %v \n", err)
 			break
 		}
 		err = sj.ws.SetStringByName("editAvgPrice", "")
-		err = sj.ws.SetStringByName("editAvgPrice", strconv.FormatFloat(stockInfo.AveragePurchasePrice, 'f', -1, 64))
+		err = sj.ws.SetStringByName("editAvgPrice", strconv.FormatFloat(stock.AveragePurchasePrice, 'f', -1, 64))
 		if err != nil {
 			fmt.Printf("error: 約定単価の設定に失敗: %v \n", err)
 			break

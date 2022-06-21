@@ -33,7 +33,7 @@ const (
 	GeneralAccount
 )
 
-type StockInfo struct {
+type Stock struct {
 	SecuritiesCompany    SecuritiesCompany
 	StockCountry         Country
 	SecuritiesAccount    SecuritiesAccount
@@ -147,8 +147,8 @@ func ToFloatByRemoveString(str string) (float64, error) {
 	return f, nil
 }
 
-func DiffStocks(stocksMain, stocksSub []StockInfo) []StockInfo {
-	var diffStocks []StockInfo
+func DiffStocks(stocksMain, stocksSub []Stock) []Stock {
+	var diffStocks []Stock
 	for _, stockMain := range stocksMain {
 		isNotExist := true
 		for _, stockSub := range stocksSub {
@@ -164,7 +164,7 @@ func DiffStocks(stocksMain, stocksSub []StockInfo) []StockInfo {
 	return diffStocks
 }
 
-func PrintStock(stock StockInfo) {
+func PrintStock(stock Stock) {
 	fmt.Printf("%v, %v, %v, %v, %v, %v\n",
 		GetSecuritiesCompanyName(stock.SecuritiesCompany),
 		GetCountryName(stock.StockCountry),
