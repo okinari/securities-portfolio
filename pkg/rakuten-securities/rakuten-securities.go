@@ -6,8 +6,6 @@ import (
 	"strconv"
 )
 
-const LoginUrl = "https://www.rakuten-sec.co.jp/ITS/V_ACT_Login.html"
-
 type RakutenSecurities struct {
 	ws *golibs.WebScraping
 }
@@ -33,7 +31,7 @@ func (rs *RakutenSecurities) Close() error {
 
 func (rs *RakutenSecurities) Login(userName string, password string) error {
 
-	err := rs.ws.NavigatePage(LoginUrl)
+	err := rs.ws.NavigatePage("https://www.rakuten-sec.co.jp/ITS/V_ACT_Login.html")
 	if err != nil {
 		return err
 	}

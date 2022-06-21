@@ -6,9 +6,6 @@ import (
 	"strconv"
 )
 
-const LoginUrl = "https://trade.sbineomobile.co.jp/login"
-const SecuritiesAccountUrl = "https://trade.sbineomobile.co.jp/account/portfolio"
-
 type SbiNeomobile struct {
 	ws *golibs.WebScraping
 }
@@ -34,7 +31,7 @@ func (sn *SbiNeomobile) Close() error {
 
 func (sn *SbiNeomobile) Login(userName string, password string) error {
 
-	err := sn.ws.NavigatePage(LoginUrl)
+	err := sn.ws.NavigatePage("https://trade.sbineomobile.co.jp/login")
 	if err != nil {
 		return err
 	}
@@ -57,7 +54,7 @@ func (sn *SbiNeomobile) Login(userName string, password string) error {
 
 func (sn *SbiNeomobile) GetSecuritiesAccountInfo() ([]util.StockInfo, error) {
 
-	err := sn.ws.NavigatePage(SecuritiesAccountUrl)
+	err := sn.ws.NavigatePage("https://trade.sbineomobile.co.jp/account/portfolio")
 	if err != nil {
 		return nil, err
 	}

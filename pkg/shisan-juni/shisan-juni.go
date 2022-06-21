@@ -7,10 +7,6 @@ import (
 	"strconv"
 )
 
-const LoginUrl = "https://43juni.pocco.net/auth/login"
-const JapanSecuritiesUrl = "https://43juni.pocco.net/app/dashboard/japan"
-const UsaSecuritiesUrl = "https://43juni.pocco.net/app/dashboard/usa"
-
 type ShisanJuni struct {
 	ws *golibs.WebScraping
 }
@@ -36,7 +32,7 @@ func (sj *ShisanJuni) Close() error {
 
 func (sj *ShisanJuni) Login(userName string, password string) error {
 
-	err := sj.ws.NavigatePage(LoginUrl)
+	err := sj.ws.NavigatePage("https://43juni.pocco.net/auth/login")
 	if err != nil {
 		return err
 	}
@@ -80,19 +76,30 @@ func (sj *ShisanJuni) GetSecuritiesAccountInfo() ([]util.StockInfo, error) {
 	return stockInfoList, nil
 }
 
-func (sj *ShisanJuni) GetStockList(country util.Country) ([]util.StockInfo, error) {
+func (sj *ShisanJuni) openStockInfoScreen(country util.Country) error {
 
-	stockCountry := country
-	url := JapanSecuritiesUrl
+	url := "https://43juni.pocco.net/app/dashboard/japan"
 	if country == util.Usa {
-		url = UsaSecuritiesUrl
+		url = "https://43juni.pocco.net/app/dashboard/usa"
 	}
 
 	err := sj.ws.NavigatePage(url)
 	if err != nil {
+		return err
+	}
+
+	util.WaitTime()
+
+	return nil
+}
+
+func (sj *ShisanJuni) GetStockList(country util.Country) ([]util.StockInfo, error) {
+
+	stockCountry := country
+	err := sj.openStockInfoScreen(country)
+	if err != nil {
 		return nil, err
 	}
-	util.WaitTime()
 
 	multiSel := sj.ws.GetPage().Find("table").All("tbody > tr")
 
@@ -172,13 +179,12 @@ func (sj *ShisanJuni) GetStockList(country util.Country) ([]util.StockInfo, erro
 }
 
 // addSec は使用不可
-func (sj *ShisanJuni) addSec(stockInfo util.StockInfo) error {
+func (sj *ShisanJuni) addSec(country util.Country, stockInfo util.StockInfo) error {
 
-	err := sj.ws.NavigatePage(JapanSecuritiesUrl)
+	err := sj.openStockInfoScreen(country)
 	if err != nil {
 		return err
 	}
-	util.WaitTime()
 
 	// 登録フロートを開く
 	// document.querySelectorAll("div div div button[class^='MuiButtonBase-root MuiFab-root MuiFab-circular MuiFab-sizeLarge MuiFab-primary'] span[class^=MuiFab-label]")[0].click()
@@ -222,13 +228,12 @@ func (sj *ShisanJuni) addSec(stockInfo util.StockInfo) error {
 }
 
 // UpdateSec は使用不可
-func (sj *ShisanJuni) UpdateSec(stockInfo util.StockInfo) error {
+func (sj *ShisanJuni) UpdateSec(country util.Country, stockInfo util.StockInfo) error {
 
-	err := sj.ws.NavigatePage(JapanSecuritiesUrl)
+	err := sj.openStockInfoScreen(country)
 	if err != nil {
 		return err
 	}
-	util.WaitTime()
 
 	page := sj.ws.GetPage()
 

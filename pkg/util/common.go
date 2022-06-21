@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -55,6 +56,18 @@ func GetSecuritiesCompany(str string) SecuritiesCompany {
 	return NoneSecuritiesCompany
 }
 
+func GetSecuritiesCompanyName(securitiesCompany SecuritiesCompany) string {
+	switch securitiesCompany {
+	case SbiSecurities:
+		return "SBI証券"
+	case SbiNeomobile:
+		return "SBIネオモバ証券"
+	case RakutenSecurities:
+		return "楽天証券"
+	}
+	return ""
+}
+
 func GetSecuritiesAccount(str string) SecuritiesAccount {
 	if strings.Contains(str, "NISA") {
 		return NisaAccount
@@ -65,8 +78,33 @@ func GetSecuritiesAccount(str string) SecuritiesAccount {
 	if strings.Contains(str, "一般") {
 		return GeneralAccount
 	}
+	if strings.Contains(str, "SBIネオモバ") {
+		return SpecificAccount
+	}
 
 	return NoneAccount
+}
+
+func GetSecuritiesAccountName(securitiesAccount SecuritiesAccount) string {
+	switch securitiesAccount {
+	case NisaAccount:
+		return "NISA口座"
+	case SpecificAccount:
+		return "特定口座"
+	case GeneralAccount:
+		return "一般口座"
+	}
+	return ""
+}
+
+func GetCountryName(country Country) string {
+	switch country {
+	case Japan:
+		return "日本"
+	case Usa:
+		return "米国"
+	}
+	return ""
 }
 
 func WaitTime() {
@@ -102,6 +140,10 @@ func ToFloatByRemoveString(str string) (float64, error) {
 	if err != nil {
 		return 0.0, err
 	}
+	f, err = strconv.ParseFloat(fmt.Sprintf("%.2f", f), 0)
+	if err != nil {
+		return 0.0, err
+	}
 	return f, nil
 }
 
@@ -120,4 +162,15 @@ func DiffStocks(stocksMain, stocksSub []StockInfo) []StockInfo {
 		}
 	}
 	return diffStocks
+}
+
+func PrintStock(stock StockInfo) {
+	fmt.Printf("%v, %v, %v, %v, %v, %v\n",
+		GetSecuritiesCompanyName(stock.SecuritiesCompany),
+		GetCountryName(stock.StockCountry),
+		GetSecuritiesAccountName(stock.SecuritiesAccount),
+		stock.SecuritiesCode,
+		stock.NumberOfOwnedStock,
+		stock.AveragePurchasePrice,
+	)
 }
