@@ -61,38 +61,42 @@ func (sj *ShisanJuni) Login(userName string, password string) error {
 	return nil
 }
 
-func (sj *ShisanJuni) SetSecuritiesInfo() error {
+func (sj *ShisanJuni) GetSecuritiesAccountInfo() ([]util.StockInfo, error) {
 
-	err := sj.ws.NavigatePage(JapanSecuritiesUrl)
+	var stockInfoList []util.StockInfo
+
+	sl, err := sj.GetStockList(util.Japan)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	stockInfoList = append(stockInfoList, sl...)
+
+	sl, err = sj.GetStockList(util.Usa)
+	if err != nil {
+		return nil, err
+	}
+	stockInfoList = append(stockInfoList, sl...)
+
+	return stockInfoList, nil
+}
+
+func (sj *ShisanJuni) GetStockList(country util.Country) ([]util.StockInfo, error) {
+
+	stockCountry := country
+	url := JapanSecuritiesUrl
+	if country == util.Usa {
+		url = UsaSecuritiesUrl
+	}
+
+	err := sj.ws.NavigatePage(url)
+	if err != nil {
+		return nil, err
 	}
 	util.WaitTime()
 
-	page := sj.ws.GetPage()
+	multiSel := sj.ws.GetPage().Find("table").All("tbody > tr")
 
-	// 次のページへ
-	// document.querySelectorAll("[title='Go to next page']")[0].click()
-
-	// 次のページの存在確認
-	// document.querySelectorAll("[title='Go to next page']")[0].disabled
-
-	// ループ回す対象
-	// document.querySelectorAll("table")[0].querySelectorAll("tbody > tr")
-
-	// 証券コード
-	// document.querySelectorAll("table")[0].querySelectorAll("tbody > tr")[n].querySelectorAll("td")[1].querySelectorAll("div")[0].querySelector("span")
-
-	// 証券会社
-	// document.querySelectorAll("table")[0].querySelectorAll("tbody > tr")[0].querySelectorAll("td")[2].querySelectorAll('span span')[0]
-
-	// 保有数
-	// document.querySelectorAll("table")[0].querySelectorAll("tbody > tr")[n].querySelectorAll("td")[4]
-
-	// 平均購入単価
-	// document.querySelectorAll("table")[0].querySelectorAll("tbody > tr")[n].querySelectorAll("td")[5]
-
-	multiSel := page.Find("table").All("tbody > tr")
+	var stockInfoList []util.StockInfo
 
 	for i := 0; ; i++ {
 
@@ -102,19 +106,12 @@ func (sj *ShisanJuni) SetSecuritiesInfo() error {
 		count, err := ms.Count()
 		// カウントできない場合、そのページは終わり
 		if err != nil {
-			fmt.Printf("error: カウントできない: %v \n", err)
-
-			//time.Sleep(SleepTime * time.Second)
-
-			btn := page.All("button[title='Go to next page']").At(0)
-			fmt.Printf("result: ボタン: %v \n", btn)
 
 			// 次のページを確認し、存在する場合、次のページへ、存在しない場合、処理終了
-			disabled, err := btn.Attribute("disabled")
+			disabled, err := sj.ws.GetPage().All("button[title='Go to next page']").At(0).Attribute("disabled")
 			if err != nil {
-				fmt.Printf("error: 次のページの確認に失敗: %v \n", err)
+				return nil, err
 			}
-			fmt.Printf("result: 次のページの存在確認: %v \n", disabled)
 			if disabled == "true" {
 				break
 			}
@@ -122,55 +119,59 @@ func (sj *ShisanJuni) SetSecuritiesInfo() error {
 			// 存在する場合
 			err = sj.ws.ExecJavaScript("document.querySelectorAll(\"[title='Go to next page']\")[0].click()", nil)
 			if err != nil {
-				fmt.Printf("error: 次のページへの遷移に失敗: %v \n", err)
 				break
 			}
 
 			i = -1
-
 			continue
 		}
+		// 謎の行があるので、これは無視して次の行へ回す
 		if count == 1 {
 			continue
 		}
 
-		// 証券コード
-		securitiesCode, err := ms.At(1).All("div").At(0).Find("span").Text()
-		if err != nil {
-			fmt.Printf("error: 証券コード: %v \n", err)
-			break
+		stockInfo := util.StockInfo{
+			StockCountry: stockCountry,
 		}
-		fmt.Printf("result 証券コード: %v \n", securitiesCode)
 
-		// 証券会社
-		securitiesCompany, err := ms.At(2).All("span > span").At(0).Text()
+		// 証券コード
+		stockInfo.SecuritiesCode, err = ms.At(1).All("div").At(0).Find("span").Text()
 		if err != nil {
-			fmt.Printf("error: 証券会社: %v \n", err)
 			break
 		}
-		fmt.Printf("result 証券会社: %v \n", securitiesCompany)
+
+		// 証券会社、口座区分
+		tag, err := ms.At(2).All("span > a > span").At(0).Text()
+		if err != nil {
+			break
+		}
+		stockInfo.SecuritiesCompany = util.GetSecuritiesCompany(tag)
+		stockInfo.SecuritiesAccount = util.GetSecuritiesAccount(tag)
 
 		// 保有株式数
 		numOfOwnedStock, err := ms.At(4).Text()
 		if err != nil {
-			fmt.Printf("error: 保有株式数: %v \n", err)
 			break
 		}
-		fmt.Printf("result 保有株式数: %v \n", numOfOwnedStock)
+		stockInfo.NumberOfOwnedStock = util.ToIntByRemoveString(numOfOwnedStock)
 
 		// 平均購入単価
 		unitPriceOfAvgPurchase, err := ms.At(5).Text()
 		if err != nil {
-			fmt.Printf("error: 平均購入単価: %v \n", err)
 			break
 		}
-		fmt.Printf("result 平均購入単価: %v \n", unitPriceOfAvgPurchase)
+		stockInfo.AveragePurchasePrice, err = util.ToFloatByRemoveString(unitPriceOfAvgPurchase)
+		if err != nil {
+			break
+		}
 
+		stockInfoList = append(stockInfoList, stockInfo)
 	}
 
-	return nil
+	return stockInfoList, nil
 }
 
+// addSec は使用不可
 func (sj *ShisanJuni) addSec(stockInfo util.StockInfo) error {
 
 	err := sj.ws.NavigatePage(JapanSecuritiesUrl)
@@ -220,6 +221,7 @@ func (sj *ShisanJuni) addSec(stockInfo util.StockInfo) error {
 	return nil
 }
 
+// UpdateSec は使用不可
 func (sj *ShisanJuni) UpdateSec(stockInfo util.StockInfo) error {
 
 	err := sj.ws.NavigatePage(JapanSecuritiesUrl)

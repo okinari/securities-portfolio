@@ -20,7 +20,7 @@ type Country int
 const (
 	NoneCountry Country = iota
 	Japan
-	America
+	Usa
 )
 
 type SecuritiesAccount int
@@ -29,6 +29,7 @@ const (
 	NoneAccount SecuritiesAccount = iota
 	NisaAccount
 	SpecificAccount
+	GeneralAccount
 )
 
 type StockInfo struct {
@@ -41,14 +42,31 @@ type StockInfo struct {
 }
 
 func GetSecuritiesCompany(str string) SecuritiesCompany {
-	if str == "SBI証券" {
+	if strings.Contains(str, "ネオモバ") {
+		return SbiNeomobile
+	}
+	if strings.Contains(str, "SBI") {
 		return SbiSecurities
 	}
-	if str == "SBIネオモバ" {
-		return SbiNeomobile
+	if strings.Contains(str, "楽天") {
+		return RakutenSecurities
 	}
 
 	return NoneSecuritiesCompany
+}
+
+func GetSecuritiesAccount(str string) SecuritiesAccount {
+	if strings.Contains(str, "NISA") {
+		return NisaAccount
+	}
+	if strings.Contains(str, "特定") {
+		return SpecificAccount
+	}
+	if strings.Contains(str, "一般") {
+		return GeneralAccount
+	}
+
+	return NoneAccount
 }
 
 func WaitTime() {
@@ -68,14 +86,38 @@ func ToIntByRemoveString(str string) int {
 func ToFloatByRemoveString(str string) (float64, error) {
 	strNumber := ""
 	slice := strings.Split(str, "")
-	for i, r := range str {
-		if ('0' <= r && r <= '9') || r == '.' {
-			strNumber += slice[i]
+	for _, s := range slice {
+		if s == "." {
+			strNumber += s
+			continue
 		}
+
+		_, err := strconv.Atoi(s)
+		if err != nil {
+			continue
+		}
+		strNumber += s
 	}
 	f, err := strconv.ParseFloat(strNumber, 0)
 	if err != nil {
 		return 0.0, err
 	}
 	return f, nil
+}
+
+func DiffStocks(stocksMain, stocksSub []StockInfo) []StockInfo {
+	var diffStocks []StockInfo
+	for _, stockMain := range stocksMain {
+		isNotExist := true
+		for _, stockSub := range stocksSub {
+			if stockSub == stockMain {
+				isNotExist = false
+				break
+			}
+		}
+		if isNotExist {
+			diffStocks = append(diffStocks, stockMain)
+		}
+	}
+	return diffStocks
 }

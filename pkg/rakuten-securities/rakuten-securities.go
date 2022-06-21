@@ -61,28 +61,28 @@ func (rs *RakutenSecurities) GetSecuritiesAccountInfo() ([]util.StockInfo, error
 	var stockInfoList []util.StockInfo
 
 	// 国内株式（現物/特定預り）
-	siList, err := rs.getStockListJapanForJapanSpecificAccount()
+	siList, err := rs.GetStockListJapanForJapanSpecificAccount()
 	if err != nil {
 		return nil, err
 	}
 	stockInfoList = append(stockInfoList, siList...)
 
 	// 国内株式（現物/NISA預り）
-	siList, err = rs.getStockListForJapanNisaAccount()
+	siList, err = rs.GetStockListForJapanNisaAccount()
 	if err != nil {
 		return nil, err
 	}
 	stockInfoList = append(stockInfoList, siList...)
 
 	// 米国株式（現物/特定預り）
-	siList, err = rs.getStockListForUsSpecificAccount()
+	siList, err = rs.GetStockListForUsSpecificAccount()
 	if err != nil {
 		return nil, err
 	}
 	stockInfoList = append(stockInfoList, siList...)
 
 	// 米国株式（現物/NISA預り）
-	siList, err = rs.getStockListForUsNisaAccount()
+	siList, err = rs.GetStockListForUsNisaAccount()
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (rs *RakutenSecurities) openJapanStockScreen() error {
 	return nil
 }
 
-func (rs *RakutenSecurities) getStockListJapanForJapanSpecificAccount() ([]util.StockInfo, error) {
+func (rs *RakutenSecurities) GetStockListJapanForJapanSpecificAccount() ([]util.StockInfo, error) {
 
 	err := rs.openJapanStockScreen()
 	if err != nil {
@@ -158,7 +158,7 @@ func (rs *RakutenSecurities) getStockListJapanForJapanSpecificAccount() ([]util.
 	return stockInfoList, nil
 }
 
-func (rs *RakutenSecurities) getStockListForJapanNisaAccount() ([]util.StockInfo, error) {
+func (rs *RakutenSecurities) GetStockListForJapanNisaAccount() ([]util.StockInfo, error) {
 
 	err := rs.openJapanStockScreen()
 	if err != nil {
@@ -225,7 +225,7 @@ func (rs *RakutenSecurities) openUsStockScreen() error {
 	return nil
 }
 
-func (rs *RakutenSecurities) getStockListForUsSpecificAccount() ([]util.StockInfo, error) {
+func (rs *RakutenSecurities) GetStockListForUsSpecificAccount() ([]util.StockInfo, error) {
 
 	err := rs.openUsStockScreen()
 	if err != nil {
@@ -243,7 +243,7 @@ func (rs *RakutenSecurities) getStockListForUsSpecificAccount() ([]util.StockInf
 
 		stockInfo := &util.StockInfo{
 			SecuritiesCompany: util.RakutenSecurities,
-			StockCountry:      util.America,
+			StockCountry:      util.Usa,
 			SecuritiesAccount: util.SpecificAccount,
 		}
 
@@ -280,7 +280,7 @@ func (rs *RakutenSecurities) getStockListForUsSpecificAccount() ([]util.StockInf
 	return stockInfoList, nil
 }
 
-func (rs *RakutenSecurities) getStockListForUsNisaAccount() ([]util.StockInfo, error) {
+func (rs *RakutenSecurities) GetStockListForUsNisaAccount() ([]util.StockInfo, error) {
 
 	err := rs.openUsStockScreen()
 	if err != nil {
@@ -298,7 +298,7 @@ func (rs *RakutenSecurities) getStockListForUsNisaAccount() ([]util.StockInfo, e
 
 		stockInfo := &util.StockInfo{
 			SecuritiesCompany: util.RakutenSecurities,
-			StockCountry:      util.America,
+			StockCountry:      util.Usa,
 			SecuritiesAccount: util.NisaAccount,
 		}
 
