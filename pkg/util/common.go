@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -34,12 +35,23 @@ const (
 )
 
 type Stock struct {
-	SecuritiesCompany    SecuritiesCompany
-	StockCountry         Country
-	SecuritiesAccount    SecuritiesAccount
-	SecuritiesCode       string
-	AveragePurchasePrice float64
-	NumberOfOwnedStock   int
+	SecuritiesCompany       SecuritiesCompany // 証券会社
+	StockCountry            Country           // 国
+	SecuritiesAccount       SecuritiesAccount // 証券口座
+	SecuritiesCode          string            // 証券コード
+	CompanyName             string            // 会社名
+	Industry                string            // 業種
+	NumberOfOwnedStock      float64           // 保有株式数
+	AveragePurchasePriceOne float64           // 平均取得単価(1株)
+	AveragePurchasePriceAll float64           // 平均取得単価(合計)
+	ValuationOne            float64           // 評価額(1株)
+	ValuationAll            float64           // 評価額(合計)
+	ProfitAndLossOne        float64           // 損益(1株)
+	ProfitAndLossAll        float64           // 損益(合計)
+	ProfitAndLossRatio      float64           // 損益(割合)
+	DividendOne             float64           // 配当金(1株)
+	DividendAll             float64           // 配当金(合計)
+	DividendRatio           float64           // 配当利回り
 }
 
 func GetSecuritiesCompany(str string) SecuritiesCompany {
@@ -114,7 +126,7 @@ func WaitTime() {
 func ToIntByRemoveString(str string) int {
 	n := 0
 	for _, r := range str {
-		if '0' <= r && r <= '9' {
+		if ('0' <= r && r <= '9') || (r == '-') {
 			n = n*10 + int(r-'0')
 		}
 	}
@@ -125,7 +137,7 @@ func ToFloatByRemoveString(str string) (float64, error) {
 	strNumber := ""
 	slice := strings.Split(str, "")
 	for _, s := range slice {
-		if s == "." {
+		if s == "." || s == "-" {
 			strNumber += s
 			continue
 		}
@@ -165,12 +177,54 @@ func DiffStocks(stocksMain, stocksSub []Stock) []Stock {
 }
 
 func PrintStock(stock Stock) {
-	fmt.Printf("%v, %v, %v, %v, %v, %v\n",
+	fmt.Printf("%v,%v,%v,%v,%v,%v\n",
 		GetSecuritiesCompanyName(stock.SecuritiesCompany),
 		GetCountryName(stock.StockCountry),
 		GetSecuritiesAccountName(stock.SecuritiesAccount),
 		stock.SecuritiesCode,
 		stock.NumberOfOwnedStock,
-		stock.AveragePurchasePrice,
+		stock.AveragePurchasePriceOne,
 	)
+}
+
+func outputPortfolioCsvFormatOne(stock Stock) {
+	// コード,市場,名称,業種,保有数
+	// ,購入価格(1株あたり),購入価格(合計),時価,損益(金額),損益(割合)
+	// ,EPS,1株配当,配当利回り,保有数購入価格備考
+	fmt.Printf(
+		"%v,,%v,%v,%v"+
+			",%v,%v,%v,%v,%v"+
+			",,%v,%v,\n",
+
+		stock.SecuritiesCode, // コード
+		// 市場-不要
+		stock.CompanyName,        // 名称
+		stock.Industry,           // 業種
+		stock.NumberOfOwnedStock, // 保有数
+
+		stock.AveragePurchasePriceOne,                     // 購入価格(1株あたり)
+		stock.AveragePurchasePriceAll,                     // 購入価格(合計)
+		stock.ValuationAll,                                // 時価(合計)
+		stock.ProfitAndLossAll,                            // 損益(金額)
+		fmt.Sprintf("%.2f", stock.ProfitAndLossRatio)+"%", // 損益(割合)
+
+		// EPS-不要
+		fmt.Sprintf("%.2f", stock.DividendOne)+"円",   // 1株配当
+		fmt.Sprintf("%.2f", stock.DividendRatio)+"%", // 配当利回り
+		// 保有数購入価格備考-不要
+	)
+}
+
+func OutputPortfolioCsvFormatAll(stocks []Stock) {
+	for _, stock := range stocks {
+		outputPortfolioCsvFormatOne(stock)
+	}
+}
+
+func GetStringOnlyInsideBrackets(str string) string {
+	reg1 := regexp.MustCompile(`(.+)\(`)
+	reg2 := regexp.MustCompile(`\)(.+)`)
+	str = reg1.ReplaceAllString(str, "")
+	str = reg2.ReplaceAllString(str, "")
+	return str
 }

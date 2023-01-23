@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/okinari/golibs"
 	"github.com/okinari/securities-portfolio/pkg/util"
+	"github.com/sclevine/agouti"
 	"strconv"
+	"strings"
 )
 
 type ShisanJuni struct {
@@ -92,7 +94,6 @@ func (sj *ShisanJuni) openStockInfoScreen(country util.Country) error {
 
 func (sj *ShisanJuni) GetStocks(country util.Country) ([]util.Stock, error) {
 
-	stockCountry := country
 	err := sj.openStockInfoScreen(country)
 	if err != nil {
 		return nil, err
@@ -104,7 +105,9 @@ func (sj *ShisanJuni) GetStocks(country util.Country) ([]util.Stock, error) {
 
 	for i := 0; ; i++ {
 
-		ms := multiSel.At(i).All("td")
+		sel := multiSel.At(i)
+
+		ms := sel.All("td")
 
 		// 謎の行がある
 		count, err := ms.Count()
@@ -134,45 +137,133 @@ func (sj *ShisanJuni) GetStocks(country util.Country) ([]util.Stock, error) {
 			continue
 		}
 
-		stock := util.Stock{
-			StockCountry: stockCountry,
-		}
-
-		// 証券コード
-		stock.SecuritiesCode, err = ms.At(1).All("div").At(0).Find("span").Text()
+		stock, err := sj.convertScreenRowInfoToStock(sel)
 		if err != nil {
+			fmt.Printf("%v", err)
 			break
 		}
-
-		// 証券会社、口座区分
-		tag, err := ms.At(2).All("span > a > span").At(0).Text()
-		if err != nil {
-			break
-		}
-		stock.SecuritiesCompany = util.GetSecuritiesCompany(tag)
-		stock.SecuritiesAccount = util.GetSecuritiesAccount(tag)
-
-		// 保有株式数
-		numOfOwnedStock, err := ms.At(4).Text()
-		if err != nil {
-			break
-		}
-		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfOwnedStock)
-
-		// 平均購入単価
-		unitPriceOfAvgPurchase, err := ms.At(5).Text()
-		if err != nil {
-			break
-		}
-		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(unitPriceOfAvgPurchase)
-		if err != nil {
-			break
-		}
-
-		stocks = append(stocks, stock)
+		stock.StockCountry = country
+		stocks = append(stocks, *stock)
 	}
 
 	return stocks, nil
+}
+
+func (sj *ShisanJuni) convertScreenRowInfoToStock(sel *agouti.Selection) (*util.Stock, error) {
+
+	ms := sel.All("td")
+
+	stock := util.Stock{}
+
+	// 証券コード
+	var err error = nil
+	stock.SecuritiesCode, err = ms.At(1).All("div").At(0).Find("span").Text()
+	if err != nil {
+		return nil, err
+	}
+
+	// 会社名
+	stock.CompanyName, err = ms.At(2).Find("h6").Text()
+	if err != nil {
+		return nil, err
+	}
+
+	// 業種
+	stock.Industry, err = ms.At(2).All("span > span").At(1).Text()
+	if err != nil {
+		return nil, err
+	}
+
+	// 証券会社、口座区分
+	tag, err := ms.At(2).All("span > a > span").At(0).Text()
+	if err != nil {
+		return nil, err
+	}
+	stock.SecuritiesCompany = util.GetSecuritiesCompany(tag)
+	stock.SecuritiesAccount = util.GetSecuritiesAccount(tag)
+
+	// 評価額
+	valuationStr, err := ms.At(3).Find("h6").Text()
+	if err != nil {
+		return nil, err
+	}
+	valuation, err := util.ToFloatByRemoveString(valuationStr)
+	if err != nil {
+		return nil, err
+	}
+	stock.ValuationAll = valuation
+
+	// 損益(割合、金額)
+	profitAndLossStr, err := ms.At(3).Find("span").Text()
+	if err != nil {
+		return nil, err
+	}
+	profitAndLossRatioStr := util.GetStringOnlyInsideBrackets(profitAndLossStr)
+	profitAndLossRatio, err := util.ToFloatByRemoveString(profitAndLossRatioStr)
+	if err != nil {
+		return nil, err
+	}
+	stock.ProfitAndLossRatio = profitAndLossRatio
+
+	profitAndLossAllStr := strings.Replace(profitAndLossStr, profitAndLossRatioStr, "", -1)
+	profitAndLossAll, err := util.ToFloatByRemoveString(profitAndLossAllStr)
+	if err != nil {
+		return nil, err
+	}
+	stock.ProfitAndLossAll = profitAndLossAll
+
+	// 保有株式数
+	numberOfOwnedStockStr, err := ms.At(4).Text()
+	if err != nil {
+		return nil, err
+	}
+	numberOfOwnedStock, err := util.ToFloatByRemoveString(numberOfOwnedStockStr)
+	if err != nil {
+		return nil, err
+	}
+	stock.NumberOfOwnedStock = numberOfOwnedStock
+
+	// 平均購入単価
+	averagePurchasePriceStr, err := ms.At(5).Text()
+	if err != nil {
+		return nil, err
+	}
+	averagePurchasePrice, err := util.ToFloatByRemoveString(averagePurchasePriceStr)
+	if err != nil {
+		return nil, err
+	}
+	stock.AveragePurchasePriceOne = averagePurchasePrice
+
+	// 配当金(金額)
+	dividendStr, err := ms.At(6).Find("h6").Text()
+	if err != nil {
+		return nil, err
+	}
+	dividend, err := util.ToFloatByRemoveString(dividendStr)
+	if err != nil {
+		return nil, err
+	}
+	stock.DividendAll = dividend
+
+	// 配当金(割合)
+	dividendRatioStr, err := ms.At(6).Find("span").Text()
+	if err != nil {
+		return nil, err
+	}
+	dividendRatioStr = util.GetStringOnlyInsideBrackets(dividendRatioStr)
+	dividendRatio, err := util.ToFloatByRemoveString(dividendRatioStr)
+	if err != nil {
+		return nil, err
+	}
+	stock.DividendRatio = dividendRatio
+
+	// 計算
+	stock.ValuationOne = stock.ValuationAll / stock.NumberOfOwnedStock
+	stock.ProfitAndLossOne = stock.ProfitAndLossAll / stock.NumberOfOwnedStock
+	stock.AveragePurchasePriceAll = stock.AveragePurchasePriceOne * stock.NumberOfOwnedStock
+	stock.DividendOne = stock.DividendAll / stock.NumberOfOwnedStock
+
+	return &stock, nil
 }
 
 // addSec は使用不可
@@ -212,11 +303,11 @@ func (sj *ShisanJuni) addSec(country util.Country, stock util.Stock) error {
 	if err != nil {
 		return err
 	}
-	err = sj.ws.SetStringByName("addNumber", strconv.Itoa(stock.NumberOfOwnedStock))
+	err = sj.ws.SetStringByName("addNumber", strconv.FormatFloat(stock.NumberOfOwnedStock, 'f', 2, 64))
 	if err != nil {
 		return err
 	}
-	err = sj.ws.SetStringByName("buyPrice", strconv.FormatFloat(stock.AveragePurchasePrice, 'f', -1, 64))
+	err = sj.ws.SetStringByName("buyPrice", strconv.FormatFloat(stock.AveragePurchasePriceOne, 'f', -1, 64))
 	if err != nil {
 		return err
 	}
@@ -343,24 +434,24 @@ func (sj *ShisanJuni) UpdateSec(country util.Country, stock util.Stock) error {
 		util.WaitTime()
 
 		// 保有株式数、約定単価を設定して、情報更新
-		err = sj.ws.ExecJavaScript("document.querySelector('[name=editPosAmount]').value = '"+strconv.Itoa(stock.NumberOfOwnedStock)+"'", nil)
+		err = sj.ws.ExecJavaScript("document.querySelector('[name=editPosAmount]').value = '"+strconv.FormatFloat(stock.NumberOfOwnedStock, 'f', 2, 64)+"'", nil)
 		if err != nil {
 			fmt.Printf("error: 保有株式数のクリアに失敗: %v \n", err)
 			break
 		}
 		err = sj.ws.SetStringByName("editPosAmount", "")
-		err = sj.ws.SetStringByName("editPosAmount", strconv.Itoa(stock.NumberOfOwnedStock))
+		err = sj.ws.SetStringByName("editPosAmount", strconv.FormatFloat(stock.NumberOfOwnedStock, 'f', 2, 64))
 		if err != nil {
 			fmt.Printf("error: 保有株式数の設定に失敗: %v \n", err)
 			break
 		}
-		err = sj.ws.ExecJavaScript("document.querySelector('[name=editAvgPrice]').value = '"+strconv.FormatFloat(stock.AveragePurchasePrice, 'f', -1, 64)+"'", nil)
+		err = sj.ws.ExecJavaScript("document.querySelector('[name=editAvgPrice]').value = '"+strconv.FormatFloat(stock.AveragePurchasePriceOne, 'f', -1, 64)+"'", nil)
 		if err != nil {
 			fmt.Printf("error: 約定単価のクリアに失敗: %v \n", err)
 			break
 		}
 		err = sj.ws.SetStringByName("editAvgPrice", "")
-		err = sj.ws.SetStringByName("editAvgPrice", strconv.FormatFloat(stock.AveragePurchasePrice, 'f', -1, 64))
+		err = sj.ws.SetStringByName("editAvgPrice", strconv.FormatFloat(stock.AveragePurchasePriceOne, 'f', -1, 64))
 		if err != nil {
 			fmt.Printf("error: 約定単価の設定に失敗: %v \n", err)
 			break
