@@ -164,7 +164,7 @@ func DiffStocks(stocksMain, stocksSub []Stock) []Stock {
 	for _, stockMain := range stocksMain {
 		isNotExist := true
 		for _, stockSub := range stocksSub {
-			if stockSub == stockMain {
+			if DiffStock(stockMain, stockSub) {
 				isNotExist = false
 				break
 			}
@@ -174,6 +174,19 @@ func DiffStocks(stocksMain, stocksSub []Stock) []Stock {
 		}
 	}
 	return diffStocks
+}
+
+func DiffStock(stockMain, stockSub Stock) bool {
+	if stockSub.SecuritiesCompany == stockMain.SecuritiesCompany &&
+		stockSub.StockCountry == stockMain.StockCountry &&
+		stockSub.SecuritiesAccount == stockMain.SecuritiesAccount &&
+		stockSub.SecuritiesCode == stockMain.SecuritiesCode &&
+		stockSub.NumberOfOwnedStock == stockMain.NumberOfOwnedStock &&
+		stockSub.AveragePurchasePriceOne == stockMain.AveragePurchasePriceOne {
+		return true
+	}
+
+	return false
 }
 
 func PrintStock(stock Stock) {

@@ -170,14 +170,17 @@ func getStocksForJapan(multiSelection *agouti.MultiSelection, securitiesAccount 
 		if err != nil {
 			break
 		}
-		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+		stock.NumberOfOwnedStock, err = util.ToFloatByRemoveString(numOfStock)
+		if err != nil {
+			break
+		}
 
 		// 取得単価
 		priceOfAvg, err := ms.At(1).Text()
 		if err != nil {
 			break
 		}
-		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+		stock.AveragePurchasePriceOne, err = util.ToFloatByRemoveString(priceOfAvg)
 		if err != nil {
 			break
 		}
@@ -257,14 +260,17 @@ func (ss *SbiSecurities) GetStocksForUsaAccount() ([]util.Stock, error) {
 			if err != nil {
 				break
 			}
-			stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+			stock.NumberOfOwnedStock, err = util.ToFloatByRemoveString(numOfStock)
+			if err != nil {
+				break
+			}
 
 			// 取得単価
 			priceOfAvg, err := ms.At(j*4 + 1).Text()
 			if err != nil {
 				break
 			}
-			stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+			stock.AveragePurchasePriceOne, err = util.ToFloatByRemoveString(priceOfAvg)
 			if err != nil {
 				break
 			}

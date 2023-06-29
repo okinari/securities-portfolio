@@ -118,9 +118,9 @@ func (sn *SbiNeomobile) GetSecuritiesAccountInfo() ([]util.Stock, error) {
 				if err != nil {
 					break
 				}
-				stock.NumberOfOwnedStock = numberOfOwnedStock
+				stock.NumberOfOwnedStock = float64(numberOfOwnedStock)
 			} else if name == "平均取得単価" {
-				stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(value)
+				stock.AveragePurchasePriceOne, err = util.ToFloatByRemoveString(value)
 				if err != nil {
 					break
 				}

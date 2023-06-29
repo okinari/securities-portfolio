@@ -138,14 +138,17 @@ func (rs *RakutenSecurities) GetStocksJapanForJapanSpecificAccount() ([]util.Sto
 		if err != nil {
 			break
 		}
-		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+		stock.NumberOfOwnedStock, err = util.ToFloatByRemoveString(numOfStock)
+		if err != nil {
+			break
+		}
 
 		// 取得単価
 		priceOfAvg, err := ms.At(5).Text()
 		if err != nil {
 			break
 		}
-		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+		stock.AveragePurchasePriceOne, err = util.ToFloatByRemoveString(priceOfAvg)
 		if err != nil {
 			break
 		}
@@ -192,14 +195,17 @@ func (rs *RakutenSecurities) GetStocksForJapanNisaAccount() ([]util.Stock, error
 		if err != nil {
 			break
 		}
-		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+		stock.NumberOfOwnedStock, err = util.ToFloatByRemoveString(numOfStock)
+		if err != nil {
+			break
+		}
 
 		// 取得単価
 		priceOfAvg, err := ms.At(2).Text()
 		if err != nil {
 			break
 		}
-		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+		stock.AveragePurchasePriceOne, err = util.ToFloatByRemoveString(priceOfAvg)
 		if err != nil {
 			break
 		}
@@ -260,14 +266,17 @@ func (rs *RakutenSecurities) GetStocksForUsSpecificAccount() ([]util.Stock, erro
 		if err != nil {
 			break
 		}
-		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+		stock.NumberOfOwnedStock, err = util.ToFloatByRemoveString(numOfStock)
+		if err != nil {
+			break
+		}
 
 		// 取得単価
 		priceOfAvg, err := ms.At(2).Text()
 		if err != nil {
 			break
 		}
-		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+		stock.AveragePurchasePriceOne, err = util.ToFloatByRemoveString(priceOfAvg)
 		if err != nil {
 			break
 		}
@@ -317,14 +326,17 @@ func (rs *RakutenSecurities) GetStocksForUsNisaAccount() ([]util.Stock, error) {
 		if err != nil {
 			break
 		}
-		stock.NumberOfOwnedStock = util.ToIntByRemoveString(numOfStock)
+		stock.NumberOfOwnedStock, err = util.ToFloatByRemoveString(numOfStock)
+		if err != nil {
+			break
+		}
 
 		// 取得単価
 		priceOfAvg, err := ms.At(1).Text()
 		if err != nil {
 			break
 		}
-		stock.AveragePurchasePrice, err = util.ToFloatByRemoveString(priceOfAvg)
+		stock.AveragePurchasePriceOne, err = util.ToFloatByRemoveString(priceOfAvg)
 		if err != nil {
 			break
 		}
