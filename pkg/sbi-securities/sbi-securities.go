@@ -128,7 +128,7 @@ func (ss *SbiSecurities) GetStocksForJapanNisaAccount() ([]util.Stock, error) {
 	if err != nil {
 		return nil, err
 	}
-	if title != "株式（現物/NISA預り）" {
+	if title != "株式（現物/旧NISA預り）" {
 		return nil, fmt.Errorf("構造が違います")
 	}
 	stocks := getStocksForJapan(multiSelection, util.NisaAccount)

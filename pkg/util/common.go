@@ -205,10 +205,14 @@ func outputPortfolioCsvFormatOne(stock Stock) {
 	// ,購入価格(1株あたり),購入価格(合計),時価,損益(金額),損益(割合)
 	// ,EPS,1株配当,配当利回り,保有数購入価格備考
 	fmt.Printf(
+		//"%v,%v,,%v,%v,%v"+
+		//	",%v,%v,%v,%v,%v"+
+		//	",,%v,%v,\n",
 		"%v,,%v,%v,%v"+
 			",%v,%v,%v,%v,%v"+
 			",,%v,%v,\n",
 
+		//stock.SecuritiesCompany, // 証券会社
 		stock.SecuritiesCode, // コード
 		// 市場-不要
 		stock.CompanyName,        // 名称
