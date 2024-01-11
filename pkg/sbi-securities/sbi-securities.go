@@ -6,6 +6,7 @@ import (
 	"github.com/okinari/securities-portfolio/pkg/util"
 	"github.com/sclevine/agouti"
 	"strconv"
+	"strings"
 )
 
 type SbiSecurities struct {
@@ -154,12 +155,14 @@ func getStocksForJapan(multiSelection *agouti.MultiSelection, securitiesAccount 
 		// 奇数列は証券コードなど
 		ms := multiSelection.At(i).All("td")
 
-		// 証券コード
+		// 証券コード、会社名
 		secCode, err := ms.At(0).Text()
 		if err != nil {
 			break
 		}
 		stock.SecuritiesCode = strconv.Itoa(util.ToIntByRemoveString(secCode))
+		stock.CompanyName = strings.Replace(secCode, stock.SecuritiesCode, "", -1)
+		stock.CompanyName = strings.TrimSpace(stock.CompanyName)
 
 		// 偶数列は保有株式数、取得単価など
 		i++

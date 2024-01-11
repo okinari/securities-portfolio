@@ -52,6 +52,7 @@ type Stock struct {
 	DividendOne             float64           // 配当金(1株)
 	DividendAll             float64           // 配当金(合計)
 	DividendRatio           float64           // 配当利回り
+	EarningsPerShare        float64           // EPS(1株あたり純利益)
 }
 
 func GetSecuritiesCompany(str string) SecuritiesCompany {
@@ -159,6 +160,14 @@ func ToFloatByRemoveString(str string) (float64, error) {
 	return f, nil
 }
 
+func ToStringByFloat64(number float64) string {
+	return strconv.FormatFloat(number, 'f', -1, 64)
+}
+
+func ToStringByInt(number int) string {
+	return strconv.Itoa(number)
+}
+
 func DiffStocks(stocksMain, stocksSub []Stock) []Stock {
 	var diffStocks []Stock
 	for _, stockMain := range stocksMain {
@@ -205,15 +214,15 @@ func outputPortfolioCsvFormatOne(stock Stock) {
 	// ,購入価格(1株あたり),購入価格(合計),時価,損益(金額),損益(割合)
 	// ,EPS,1株配当,配当利回り,保有数購入価格備考
 	fmt.Printf(
-		//"%v,%v,,%v,%v,%v"+
-		//	",%v,%v,%v,%v,%v"+
-		//	",,%v,%v,\n",
-		"%v,,%v,%v,%v"+
+		"%v,%v,,%v,%v,%v"+
 			",%v,%v,%v,%v,%v"+
 			",,%v,%v,\n",
+		//"%v,,%v,%v,%v"+
+		//	",%v,%v,%v,%v,%v"+
+		//	",,%v,%v,\n",
 
-		//stock.SecuritiesCompany, // 証券会社
-		stock.SecuritiesCode, // コード
+		stock.SecuritiesCompany, // 証券会社
+		stock.SecuritiesCode,    // コード
 		// 市場-不要
 		stock.CompanyName,        // 名称
 		stock.Industry,           // 業種
