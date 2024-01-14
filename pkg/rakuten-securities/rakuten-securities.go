@@ -31,11 +31,11 @@ func (rs *RakutenSecurities) Close() error {
 
 func (rs *RakutenSecurities) Login(userName string, password string) error {
 
-	err := rs.ws.NavigatePage("https://www.rakuten-sec.co.jp/ITS/V_ACT_Login.html")
+	url := "https://www.rakuten-sec.co.jp/ITS/V_ACT_Login.html"
+	err := rs.ws.NavigatePageForWait(url, 10*1000, 100)
 	if err != nil {
 		return err
 	}
-	util.WaitTime()
 
 	err = rs.ws.SetStringByID("form-login-id", userName)
 	if err != nil {
@@ -50,7 +50,10 @@ func (rs *RakutenSecurities) Login(userName string, password string) error {
 		return err
 	}
 
-	util.WaitTime()
+	err = rs.ws.WaitForURLChange(url, 10*1000, 100)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -178,7 +181,7 @@ func (rs *RakutenSecurities) GetStocksForJapanNisaAccount() ([]util.Stock, error
 		stock := &util.Stock{
 			SecuritiesCompany: util.RakutenSecurities,
 			StockCountry:      util.Japan,
-			SecuritiesAccount: util.NisaAccount,
+			SecuritiesAccount: util.NisaOldAccount,
 		}
 
 		ms := multiSelection.At(i).All("td td nobr")
@@ -307,7 +310,7 @@ func (rs *RakutenSecurities) GetStocksForUsNisaAccount() ([]util.Stock, error) {
 		stock := &util.Stock{
 			SecuritiesCompany: util.RakutenSecurities,
 			StockCountry:      util.Usa,
-			SecuritiesAccount: util.NisaAccount,
+			SecuritiesAccount: util.NisaOldAccount,
 		}
 
 		sel := multiSelection.At(i)

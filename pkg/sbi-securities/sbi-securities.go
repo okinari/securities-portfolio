@@ -34,11 +34,11 @@ func (ss *SbiSecurities) Close() error {
 
 func (ss *SbiSecurities) Login(userName string, password string) error {
 
-	err := ss.ws.NavigatePage("https://www.sbisec.co.jp/ETGate")
+	url := "https://www.sbisec.co.jp/ETGate"
+	err := ss.ws.NavigatePageForWait(url, 10*1000, 100)
 	if err != nil {
 		return err
 	}
-	util.WaitTime()
 
 	err = ss.ws.SetStringByName("user_id", userName)
 	if err != nil {
@@ -52,7 +52,11 @@ func (ss *SbiSecurities) Login(userName string, password string) error {
 	if err != nil {
 		return err
 	}
-	util.WaitTime()
+
+	err = ss.ws.WaitForURLChange(url, 10*1000, 100)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -86,12 +90,10 @@ func (ss *SbiSecurities) GetSecuritiesAccountInfo() ([]util.Stock, error) {
 }
 
 func (ss *SbiSecurities) openJapanAccountScreen() error {
-
-	err := ss.ws.NavigatePage("https://site3.sbisec.co.jp/ETGate/?_ControlID=WPLETacR001Control&_PageID=DefaultPID&_ActionID=DefaultAID")
+	err := ss.ws.NavigatePageForWait("https://site3.sbisec.co.jp/ETGate/?_ControlID=WPLETacR001Control&_PageID=DefaultPID&_ActionID=DefaultAID", 10*1000, 100)
 	if err != nil {
 		return err
 	}
-	util.WaitTime()
 
 	return nil
 }
@@ -132,7 +134,7 @@ func (ss *SbiSecurities) GetStocksForJapanNisaAccount() ([]util.Stock, error) {
 	if title != "株式（現物/旧NISA預り）" {
 		return nil, fmt.Errorf("構造が違います")
 	}
-	stocks := getStocksForJapan(multiSelection, util.NisaAccount)
+	stocks := getStocksForJapan(multiSelection, util.NisaOldAccount)
 	return stocks, nil
 }
 
@@ -197,17 +199,23 @@ func getStocksForJapan(multiSelection *agouti.MultiSelection, securitiesAccount 
 
 func (ss *SbiSecurities) openUsaAccountScreen() error {
 
-	err := ss.ws.NavigatePage("https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Foreign&cat1=home&cat2=none&sw_param1=GB&getFlg=on&int_pr1=150626_fstock_prodtop:odsite_btn_01")
+	url := "https://www.sbisec.co.jp/ETGate/?OutSide=on&_ControlID=WPLETsmR001Control&_DataStoreID=DSWPLETsmR001Control&sw_page=Foreign&cat1=home&cat2=none&sw_param1=GB&getFlg=on&int_pr1=150626_fstock_prodtop:odsite_btn_01"
+	err := ss.ws.NavigatePage(url)
 	if err != nil {
 		return err
 	}
-	util.WaitTime()
 
-	err = ss.ws.NavigatePage("https://global.sbisec.co.jp/account/summary")
+	url = "https://global.sbisec.co.jp/home"
+	err = ss.ws.WaitUntilURL(url, 10*1000, 1000)
 	if err != nil {
 		return err
 	}
-	util.WaitTime()
+
+	url = "https://global.sbisec.co.jp/account/summary"
+	err = ss.ws.NavigatePageForWait(url, 10*1000, 1000)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -235,7 +243,7 @@ func (ss *SbiSecurities) GetStocksForUsaAccount() ([]util.Stock, error) {
 		} else if title == "株式(現物/一般)" {
 			securitiesAccount = util.GeneralAccount
 		} else if title == "株式(現物/NISA)" {
-			securitiesAccount = util.NisaAccount
+			securitiesAccount = util.NisaOldAccount
 		}
 
 		// 実際の株情報を見るために1つ進める

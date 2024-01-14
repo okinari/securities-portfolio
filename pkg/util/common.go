@@ -2,13 +2,14 @@ package util
 
 import (
 	"fmt"
+	"github.com/okinari/golibs"
 	"regexp"
-	"strconv"
 	"strings"
-	"time"
 )
 
 type SecuritiesCompany int
+
+const WaitTimeSecond = 3
 
 const (
 	NoneSecuritiesCompany SecuritiesCompany = iota
@@ -29,9 +30,44 @@ type SecuritiesAccount int
 
 const (
 	NoneAccount SecuritiesAccount = iota
-	NisaAccount
+	NisaOldAccount
+	NisaNewAccount
 	SpecificAccount
 	GeneralAccount
+)
+
+const (
+	// Yahooファイナンスのポートフォリオ画面のID(ポートフォリオID)を取得する
+	// 証券の情報によって分類している
+	// 分類は以下の通り
+	// 楽天(日本株、外国株):3
+	// SBI(特定)(1000-9000番台):8-16
+	// SBI(旧NISA)(1000-9000番台):17-25
+	// SBI(外国株):26
+	// YahooFinance
+	YahooPortfolioIDRakuten            = "3"
+	YahooPortfolioIDSBISpecific1000    = "8"
+	YahooPortfolioIDSBISpecific2000    = "9"
+	YahooPortfolioIDSBISpecific3000    = "10"
+	YahooPortfolioIDSBISpecific4000    = "11"
+	YahooPortfolioIDSBISpecific5000    = "12"
+	YahooPortfolioIDSBISpecific6000    = "13"
+	YahooPortfolioIDSBISpecific7000    = "14"
+	YahooPortfolioIDSBISpecific8000    = "15"
+	YahooPortfolioIDSBISpecific9000    = "16"
+	YahooPortfolioIDSBINisaOld1000     = "17"
+	YahooPortfolioIDSBINisaOld2000     = "18"
+	YahooPortfolioIDSBINisaOld3000     = "19"
+	YahooPortfolioIDSBINisaOld4000     = "20"
+	YahooPortfolioIDSBINisaOld5000     = "21"
+	YahooPortfolioIDSBINisaOld6000     = "22"
+	YahooPortfolioIDSBINisaOld7000     = "23"
+	YahooPortfolioIDSBINisaOld8000     = "24"
+	YahooPortfolioIDSBINisaOld9000     = "25"
+	YahooPortfolioIDSBIForeignGeneral  = "26"
+	YahooPortfolioIDSBIForeignSpecific = "27"
+	YahooPortfolioIDSBIForeignOldNisa  = "28"
+	YahooPortfolioIDSBIForeignNewNisa  = "29"
 )
 
 type Stock struct {
@@ -77,13 +113,17 @@ func GetSecuritiesCompanyName(securitiesCompany SecuritiesCompany) string {
 		return "SBIネオモバ証券"
 	case RakutenSecurities:
 		return "楽天証券"
+	default:
+		panic("unhandled default case")
 	}
-	return ""
 }
 
 func GetSecuritiesAccount(str string) SecuritiesAccount {
-	if strings.Contains(str, "NISA") {
-		return NisaAccount
+	if strings.Contains(str, "旧NISA") {
+		return NisaOldAccount
+	}
+	if strings.Contains(str, "新NISA") {
+		return NisaNewAccount
 	}
 	if strings.Contains(str, "特定") {
 		return SpecificAccount
@@ -100,14 +140,48 @@ func GetSecuritiesAccount(str string) SecuritiesAccount {
 
 func GetSecuritiesAccountName(securitiesAccount SecuritiesAccount) string {
 	switch securitiesAccount {
-	case NisaAccount:
-		return "NISA口座"
+	case NisaOldAccount:
+		return "旧NISA口座"
+	case NisaNewAccount:
+		return "新NISA口座"
 	case SpecificAccount:
 		return "特定口座"
 	case GeneralAccount:
 		return "一般口座"
+	default:
+		panic("unhandled default case")
 	}
-	return ""
+}
+
+func GetCountry(str string) Country {
+	if strings.Contains(str, "日本") {
+		return Japan
+	}
+	if strings.Contains(str, "japan") {
+		return Japan
+	}
+	if strings.Contains(str, "Japan") {
+		return Japan
+	}
+	if strings.Contains(str, "米国") {
+		return Usa
+	}
+	if strings.Contains(str, "usa") {
+		return Usa
+	}
+	if strings.Contains(str, "USA") {
+		return Usa
+	}
+	if strings.Contains(str, "アメリカ") {
+		return Usa
+	}
+	if strings.Contains(str, "america") {
+		return Usa
+	}
+	if strings.Contains(str, "America") {
+		return Usa
+	}
+	return NoneCountry
 }
 
 func GetCountryName(country Country) string {
@@ -116,56 +190,25 @@ func GetCountryName(country Country) string {
 		return "日本"
 	case Usa:
 		return "米国"
+	default:
+		panic("unhandled default case")
 	}
-	return ""
 }
 
 func WaitTime() {
-	time.Sleep(3 * time.Second)
+	golibs.WaitTimeSecond(WaitTimeSecond)
 }
 
 func ToIntByRemoveString(str string) int {
-	n := 0
-	for _, r := range str {
-		if ('0' <= r && r <= '9') || (r == '-') {
-			n = n*10 + int(r-'0')
-		}
-	}
-	return n
+	return golibs.ToIntByRemoveString(str)
 }
 
 func ToFloatByRemoveString(str string) (float64, error) {
-	strNumber := ""
-	slice := strings.Split(str, "")
-	for _, s := range slice {
-		if s == "." || s == "-" {
-			strNumber += s
-			continue
-		}
-
-		_, err := strconv.Atoi(s)
-		if err != nil {
-			continue
-		}
-		strNumber += s
-	}
-	f, err := strconv.ParseFloat(strNumber, 0)
-	if err != nil {
-		return 0.0, err
-	}
-	f, err = strconv.ParseFloat(fmt.Sprintf("%.2f", f), 0)
-	if err != nil {
-		return 0.0, err
-	}
-	return f, nil
+	return golibs.ToFloatByRemoveString(str)
 }
 
 func ToStringByFloat64(number float64) string {
-	return strconv.FormatFloat(number, 'f', -1, 64)
-}
-
-func ToStringByInt(number int) string {
-	return strconv.Itoa(number)
+	return golibs.ToStringByFloat64(number)
 }
 
 func DiffStocks(stocksMain, stocksSub []Stock) []Stock {
@@ -253,4 +296,106 @@ func GetStringOnlyInsideBrackets(str string) string {
 	str = reg1.ReplaceAllString(str, "")
 	str = reg2.ReplaceAllString(str, "")
 	return str
+}
+
+// GetPortfolioID
+// yahooファイナンスのポートフォリオ画面のID(ポートフォリオID)を取得する
+// 証券の情報によって分類している
+// 分類は以下の通り
+// 楽天(日本株、外国株):3
+// SBI(特定)(1000-9000番台):8-16
+// SBI(旧NISA)(1000-9000番台):17-25
+// SBI(外国株)(一般):26
+// SBI(外国株)(特定):27
+// SBI(外国株)(旧NISA):28
+// SBI(外国株)(新NISA):29
+func GetPortfolioID(stock Stock) string {
+
+	if stock.SecuritiesCompany == GetSecuritiesCompany("楽天") {
+		return YahooPortfolioIDRakuten
+	}
+
+	if stock.SecuritiesCompany == GetSecuritiesCompany("SBI") {
+
+		if stock.StockCountry == GetCountry("米国") {
+			if stock.SecuritiesAccount == GetSecuritiesAccount("一般") {
+				return YahooPortfolioIDSBIForeignGeneral
+			}
+			if stock.SecuritiesAccount == GetSecuritiesAccount("特定") {
+				return YahooPortfolioIDSBIForeignSpecific
+			}
+			if stock.SecuritiesAccount == GetSecuritiesAccount("旧NISA") {
+				return YahooPortfolioIDSBIForeignOldNisa
+			}
+			if stock.SecuritiesAccount == GetSecuritiesAccount("新NISA") {
+				return YahooPortfolioIDSBIForeignNewNisa
+			}
+		}
+
+		if stock.StockCountry == GetCountry("日本") {
+			securitiesCode := ToIntByRemoveString(stock.SecuritiesCode)
+
+			if stock.SecuritiesAccount == GetSecuritiesAccount("特定") {
+				if securitiesCode <= 1999 {
+					return YahooPortfolioIDSBISpecific1000
+				}
+				if securitiesCode >= 2000 && securitiesCode <= 2999 {
+					return YahooPortfolioIDSBISpecific2000
+				}
+				if securitiesCode >= 3000 && securitiesCode <= 3999 {
+					return YahooPortfolioIDSBISpecific3000
+				}
+				if securitiesCode >= 4000 && securitiesCode <= 4999 {
+					return YahooPortfolioIDSBISpecific4000
+				}
+				if securitiesCode >= 5000 && securitiesCode <= 5999 {
+					return YahooPortfolioIDSBISpecific5000
+				}
+				if securitiesCode >= 6000 && securitiesCode <= 6999 {
+					return YahooPortfolioIDSBISpecific6000
+				}
+				if securitiesCode >= 7000 && securitiesCode <= 7999 {
+					return YahooPortfolioIDSBISpecific7000
+				}
+				if securitiesCode >= 8000 && securitiesCode <= 8999 {
+					return YahooPortfolioIDSBISpecific8000
+				}
+				if securitiesCode >= 9000 {
+					return YahooPortfolioIDSBISpecific9000
+				}
+			}
+
+			if stock.SecuritiesAccount == GetSecuritiesAccount("旧NISA") {
+				if securitiesCode <= 1999 {
+					return YahooPortfolioIDSBINisaOld1000
+				}
+				if securitiesCode >= 2000 && securitiesCode <= 2999 {
+					return YahooPortfolioIDSBINisaOld2000
+				}
+				if securitiesCode >= 3000 && securitiesCode <= 3999 {
+					return YahooPortfolioIDSBINisaOld3000
+				}
+				if securitiesCode >= 4000 && securitiesCode <= 4999 {
+					return YahooPortfolioIDSBINisaOld4000
+				}
+				if securitiesCode >= 5000 && securitiesCode <= 5999 {
+					return YahooPortfolioIDSBINisaOld5000
+				}
+				if securitiesCode >= 6000 && securitiesCode <= 6999 {
+					return YahooPortfolioIDSBINisaOld6000
+				}
+				if securitiesCode >= 7000 && securitiesCode <= 7999 {
+					return YahooPortfolioIDSBINisaOld7000
+				}
+				if securitiesCode >= 8000 && securitiesCode <= 8999 {
+					return YahooPortfolioIDSBINisaOld8000
+				}
+				if securitiesCode >= 9000 {
+					return YahooPortfolioIDSBINisaOld9000
+				}
+			}
+		}
+	}
+
+	return ""
 }
