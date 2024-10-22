@@ -259,7 +259,8 @@ func outputPortfolioCsvFormatOne(stock Stock) {
 	fmt.Printf(
 		"%v,%v,,%v,%v,%v"+
 			",%v,%v,%v,%v,%v"+
-			",,%v,%v,\n",
+			",,%v,%v,%v,%v"+
+			",%v,%v\n",
 		//"%v,,%v,%v,%v"+
 		//	",%v,%v,%v,%v,%v"+
 		//	",,%v,%v,\n",
@@ -281,6 +282,11 @@ func outputPortfolioCsvFormatOne(stock Stock) {
 		fmt.Sprintf("%.2f", stock.DividendOne)+"円",   // 1株配当
 		fmt.Sprintf("%.2f", stock.DividendRatio)+"%", // 配当利回り
 		// 保有数購入価格備考-不要
+		stock.SecuritiesAccount,                           // 種別コード
+		GetSecuritiesAccountName(stock.SecuritiesAccount), // 種別名称
+
+		stock.StockCountry,                 // 国コード
+		GetCountryName(stock.StockCountry), // 国名
 	)
 }
 

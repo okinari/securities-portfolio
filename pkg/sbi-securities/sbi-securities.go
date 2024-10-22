@@ -72,8 +72,15 @@ func (ss *SbiSecurities) GetSecuritiesAccountInfo() ([]util.Stock, error) {
 	}
 	stocks = append(stocks, sl...)
 
-	// 国内株式（現物/NISA預り）
-	sl, err = ss.GetStocksForJapanNisaAccount()
+	// 国内株式（現物/NISA預り（成長投資枠））
+	sl, err = ss.GetStocksForJapanNewNisaAccount()
+	if err != nil {
+		return nil, err
+	}
+	stocks = append(stocks, sl...)
+
+	// 国内株式（現物/NISA預り（成長投資枠））
+	sl, err = ss.GetStocksForJapanOldNisaAccount()
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +125,7 @@ func (ss *SbiSecurities) GetStocksForJapanSpecificAccount() ([]util.Stock, error
 	return stocks, nil
 }
 
-func (ss *SbiSecurities) GetStocksForJapanNisaAccount() ([]util.Stock, error) {
+func (ss *SbiSecurities) GetStocksForJapanNewNisaAccount() ([]util.Stock, error) {
 
 	err := ss.openJapanAccountScreen()
 	if err != nil {
@@ -127,6 +134,26 @@ func (ss *SbiSecurities) GetStocksForJapanNisaAccount() ([]util.Stock, error) {
 
 	// 株式（現物/NISA預り）
 	multiSelection := ss.ws.GetPage().All("form table").At(1).All("table").At(18).All("tr")
+	title, err := multiSelection.At(0).All("td > font > b").At(0).Text()
+	if err != nil {
+		return nil, err
+	}
+	if title != "株式（現物/NISA預り（成長投資枠））" {
+		return nil, fmt.Errorf("構造が違います")
+	}
+	stocks := getStocksForJapan(multiSelection, util.NisaOldAccount)
+	return stocks, nil
+}
+
+func (ss *SbiSecurities) GetStocksForJapanOldNisaAccount() ([]util.Stock, error) {
+
+	err := ss.openJapanAccountScreen()
+	if err != nil {
+		return nil, err
+	}
+
+	// 株式（現物/NISA預り）
+	multiSelection := ss.ws.GetPage().All("form table").At(1).All("table").At(19).All("tr")
 	title, err := multiSelection.At(0).All("td > font > b").At(0).Text()
 	if err != nil {
 		return nil, err
